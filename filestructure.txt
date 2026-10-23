@@ -1,0 +1,146 @@
+|-- .env.example
+|-- .env.local
+|-- .gitignore
+|-- AGENTS.md
+|-- eslint.config.mjs
+|-- next-env.d.ts
+|-- next.config.ts
+|-- package-lock.json
+|-- package.json
+|-- postcss.config.mjs
+|-- public
+    |-- file.svg
+    |-- globe.svg
+    |-- images
+        |-- events
+            |-- buyer-seller.jpg
+            |-- delegation.jpg
+            |-- networking.jpg
+            |-- webinar.jpg
+        |-- opportunities
+            |-- construction-materials.jpg
+            |-- manufacturing-floor.jpg
+            |-- packaging.jpg
+            |-- textile-production.jpg
+    |-- logo
+        |-- mnc-global-connect.svg
+        |-- MNCGlobalConnectLogo.png
+    |-- next.svg
+    |-- vercel.svg
+    |-- window.svg
+|-- README.md
+|-- src
+    |-- app
+        |-- about
+            |-- page.tsx
+        |-- api
+            |-- locations
+                |-- route.ts
+        |-- b2b-meetings
+            |-- page.tsx
+        |-- buyer-seller
+            |-- page.tsx
+        |-- contact
+            |-- page.tsx
+        |-- dashboard
+            |-- layout.tsx
+            |-- page.tsx
+            |-- [section]
+                |-- page.tsx
+        |-- delegations
+            |-- page.tsx
+            |-- [id]
+                |-- page.tsx
+        |-- events
+            |-- page.tsx
+            |-- [id]
+                |-- page.tsx
+        |-- favicon.ico
+        |-- globals.css
+        |-- international-introductions
+            |-- page.tsx
+        |-- join-network
+            |-- join-network.css
+            |-- page.tsx
+        |-- layout.tsx
+        |-- login
+            |-- page.tsx
+        |-- market-access
+            |-- page.tsx
+        |-- network
+            |-- page.tsx
+        |-- opportunities
+            |-- page.tsx
+            |-- [id]
+                |-- page.tsx
+        |-- page.tsx
+        |-- privacy
+            |-- page.tsx
+        |-- register
+            |-- page.tsx
+        |-- resources
+            |-- page.tsx
+        |-- success-stories
+            |-- page.tsx
+        |-- terms
+            |-- page.tsx
+        |-- trade-opportunities
+            |-- page.tsx
+    |-- components
+        |-- globe
+            |-- globe-loader.tsx
+            |-- interactive-globe.tsx
+        |-- home
+            |-- bookmark-button.tsx
+            |-- business-journey-section.tsx
+            |-- core-services-section.tsx
+            |-- facilitation-sections.tsx
+            |-- global-network-section.tsx
+            |-- hero-section.tsx
+            |-- market-sections.tsx
+            |-- stories-cta-section.tsx
+        |-- layout
+            |-- footer.tsx
+            |-- route-placeholder.tsx
+            |-- site-shell.tsx
+        |-- membership
+            |-- address-search.tsx
+            |-- form-fields.tsx
+            |-- location-field.tsx
+            |-- membership-form.tsx
+            |-- membership-page.tsx
+            |-- network-visual.tsx
+        |-- navigation
+            |-- header.tsx
+        |-- ui
+            |-- button.tsx
+            |-- card.tsx
+            |-- container.tsx
+            |-- country-flag.tsx
+            |-- section-heading.tsx
+    |-- data
+        |-- countries.ts
+        |-- delegations.ts
+        |-- events.ts
+        |-- industries.ts
+        |-- membership-verification.ts
+        |-- membership.ts
+        |-- opportunities.ts
+    |-- lib
+        |-- constants.ts
+        |-- filters.ts
+        |-- google-address.ts
+        |-- membership-application.ts
+        |-- utils.ts
+    |-- types
+        |-- company.ts
+        |-- delegation.ts
+        |-- event.ts
+        |-- meeting.ts
+        |-- membership.ts
+        |-- opportunity.ts
+|-- tests
+    |-- google-address.test.mjs
+    |-- membership-verification.test.mjs
+|-- tsconfig.json
+|-- tsconfig.tsbuildinfo
