@@ -15,7 +15,8 @@ export function isSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return true; // Same-origin fetches from older browsers and server-side tools omit it.
   try {
-    const host = request.headers.get("x-forwarded-host")?.split(",")[0].trim() || request.headers.get("host") || new URL(request.url).host;
+    // Host only (not X-Forwarded-Host, which this proxy does not overwrite and a client could supply).
+    const host = request.headers.get("host") || new URL(request.url).host;
     return new URL(origin).host.toLowerCase() === host.toLowerCase();
   } catch {
     return false;
