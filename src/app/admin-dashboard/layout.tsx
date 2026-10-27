@@ -9,6 +9,9 @@ import { collections } from "@/lib/db/mongodb";
 import { getAdmin } from "@/lib/server/admin";
 import { getCurrentUser } from "@/lib/server/session";
 
+// Per-request only: these pages depend on the signed-in admin and live data, never on a build-time snapshot.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s | Admin | MNC Global Connect" },
   robots: { index: false, follow: false },
