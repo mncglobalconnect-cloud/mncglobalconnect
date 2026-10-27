@@ -119,15 +119,6 @@ export function Footer() {
             {legalLinks.map(([label, href]) => (
               <Link key={label} href={href} className="transition hover:text-white">{label}</Link>
             ))}
-            <a
-              href="https://www.solarsystemscope.com/textures/"
-              target="_blank"
-              rel="noreferrer"
-              title="Earth imagery by Solar System Scope, CC BY 4.0; resized and adapted"
-              className="text-white/40 transition hover:text-white"
-            >
-              Earth imagery: Solar System Scope (CC BY 4.0)
-            </a>
             <span className="hidden items-center gap-1.5 text-white/40 md:inline-flex">
               Facilitating connections. Enabling global growth. <ArrowUpRight aria-hidden="true" className="size-3.5" />
             </span>
