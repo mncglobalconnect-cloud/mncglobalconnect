@@ -11,7 +11,7 @@
   --muted: #617087;
   --border: #e4ebf3;
   --gradient: linear-gradient(110deg, var(--blue), var(--cyan) 58%, var(--green));
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-jakarta), "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
 @theme inline {
@@ -24,39 +24,42 @@
   --font-sans: var(--font-sans);
 }
 
-* {
-  box-sizing: border-box;
-}
+/* Element defaults live in the base layer so Tailwind utilities (e.g. text-white on a link) can override them. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  min-height: 100vh;
-  margin: 0;
-  background: var(--background);
-  color: var(--text);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-}
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
 
-button,
-a {
-  -webkit-tap-highlight-color: transparent;
-}
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-button {
-  font: inherit;
-}
+  button {
+    font: inherit;
+  }
 
-::selection {
-  background: rgb(32 183 213 / 20%);
+  ::selection {
+    background: rgb(32 183 213 / 20%);
+  }
 }
 
 :focus-visible {
@@ -72,9 +75,25 @@ button {
   background: radial-gradient(circle at 70% 40%, #103a60 0%, #0a294a 35%, #071b31 70%, #051525 100%);
 }
 
+.globe-canvas {
+  /* Soft edge all round, plus a stronger fade on the left so a zoomed Earth stays clear of the headline. */
+  -webkit-mask-image:
+    radial-gradient(closest-side, #000 72%, transparent 100%),
+    linear-gradient(to right, transparent 0, #000 22%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(closest-side, #000 72%, transparent 100%),
+    linear-gradient(to right, transparent 0, #000 22%);
+  mask-composite: intersect;
+}
+
 .globe-interaction {
   cursor: grab;
   touch-action: none;
+}
+
+.globe-interaction[data-hover="true"] {
+  cursor: pointer;
 }
 
 .globe-interaction[data-dragging="true"] {
@@ -122,42 +141,127 @@ button {
   filter: blur(24px);
 }
 
+.site-header {
+  border-color: transparent;
+  background: rgb(255 255 255 / 90%);
+  transition: background-color 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
+}
+
+.site-header[data-scrolled] {
+  border-color: rgb(226 232 240 / 85%);
+  background: rgb(255 255 255 / 97%);
+  box-shadow: 0 10px 30px rgb(8 43 89 / 8%);
+}
+
+.site-header-bar {
+  min-height: 80px;
+  transition: min-height 300ms ease;
+}
+
+.site-header[data-scrolled] .site-header-bar {
+  min-height: 66px;
+}
+
+.site-header-logo {
+  height: 56px;
+  transition: height 300ms ease;
+}
+
+.site-header[data-scrolled] .site-header-logo {
+  height: 46px;
+}
+
 .nav-link {
+  position: relative;
   display: inline-flex;
   min-height: 40px;
   align-items: center;
   border-radius: 10px;
-  padding: 0 8px;
+  padding: 0 11px;
   color: #30435b;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
   transition: color 160ms ease, background-color 160ms ease;
 }
 
+/* Gradient underline marks the section the visitor is in. */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--gradient);
+  opacity: 0;
+  transform: translateX(-50%) scaleX(0.3);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
 .nav-link:hover,
-.mega-menu[open] > .nav-link {
+.nav-link[data-open] {
   color: #0878c7;
   background: #f3f8fc;
 }
 
-.mega-menu-panel {
-  transform-origin: top center;
-  animation: menu-enter 160ms ease-out both;
+.nav-link[aria-current="page"],
+.nav-link[data-active] {
+  color: #082b59;
 }
 
-.mobile-nav-link {
-  min-height: 44px;
-  border-radius: 10px;
-  padding: 12px 14px;
-  color: #263d58;
-  font-size: 14px;
-  font-weight: 600;
+.nav-link[aria-current="page"]::after,
+.nav-link[data-active]::after {
+  opacity: 1;
+  transform: translateX(-50%) scaleX(1);
 }
 
-.mobile-nav-link:hover,
-.mobile-menu[open] > .mobile-nav-link {
-  background: #f3f8fc;
+.nav-link:focus-visible,
+.mobile-nav-row:focus-visible {
+  outline: 2px solid rgb(20 140 224 / 55%);
+  outline-offset: 2px;
+}
+
+.menu-promo-glow {
+  background:
+    radial-gradient(circle at 85% 10%, rgb(32 183 213 / 45%), transparent 45%),
+    radial-gradient(circle at 10% 100%, rgb(53 190 132 / 30%), transparent 50%);
+}
+
+.mobile-nav-row {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  gap: 14px;
+  border-radius: 14px;
+  padding: 6px 8px;
+  color: #10213a;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.mobile-nav-row:hover,
+.mobile-nav-row[aria-expanded="true"] {
+  background: #f5f9fd;
+}
+
+.mobile-nav-row[aria-current="page"],
+.mobile-nav-row[data-active] {
   color: #0878c7;
+}
+
+.mobile-nav-icon {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: rgb(20 140 224 / 8%);
+  color: #148ce0;
 }
 
 .brand-text-gradient {
@@ -209,17 +313,6 @@ button {
   background-size: auto, 40px 40px, 40px 40px;
 }
 
-@keyframes menu-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.99);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @keyframes journey-progress {
   from {
     background-size: 0 1px;
@@ -248,4 +341,292 @@ button {
   .journey-line {
     animation: none;
   }
+}
+
+/* Core services: faint dotted grid with soft brand glows, fading out toward the edges. */
+.services-backdrop {
+  background:
+    radial-gradient(ellipse 55% 45% at 8% 10%, rgb(20 140 224 / 10%), transparent 70%),
+    radial-gradient(ellipse 45% 40% at 95% 90%, rgb(53 190 132 / 9%), transparent 70%);
+}
+
+.services-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(8 43 89 / 13%) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, #000 20%, transparent 80%);
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, #000 20%, transparent 80%);
+}
+
+/* Service card photo sits in its own column and fades into the white card at its left edge. */
+.service-card-image {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgb(0 0 0 / 55%) 30%, #000 60%);
+  mask-image: linear-gradient(to right, transparent 0%, rgb(0 0 0 / 55%) 30%, #000 60%);
+}
+
+/* Shared form controls (src/components/ui/form-controls.tsx), layered so utilities like pl-11 still apply. */
+@layer components {
+  .form-control-wrap {
+    position: relative;
+  }
+
+  .form-control {
+    width: 100%;
+    min-height: 50px;
+    border: 1px solid #dbe4ee;
+    border-radius: 14px;
+    background: #fff;
+    padding: 0 16px;
+    color: #10213a;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  }
+
+  .form-control::placeholder {
+    color: #94a3b8;
+  }
+
+  .form-control:hover {
+    border-color: #c5d3e2;
+  }
+
+  .form-control:focus {
+    border-color: #148ce0;
+    box-shadow: 0 0 0 4px rgb(20 140 224 / 12%);
+  }
+
+  .form-field[data-invalid] .form-control {
+    border-color: #e0566a;
+    background: #fffafb;
+  }
+
+  .form-field[data-invalid] .form-control:focus {
+    box-shadow: 0 0 0 4px rgb(224 86 106 / 14%);
+  }
+
+  .form-control-icon {
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    width: 18px;
+    height: 18px;
+    color: #94a3b8;
+    transform: translateY(-50%);
+    transition: color 160ms ease;
+  }
+
+  .form-control-wrap:focus-within .form-control-icon {
+    color: #148ce0;
+  }
+
+  .form-checkbox {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    accent-color: #148ce0;
+    cursor: pointer;
+  }
+}
+
+/* Login page */
+.login-brand {
+  background: linear-gradient(160deg, #0a2f5f 0%, #072349 45%, #051a36 100%);
+}
+
+.login-aurora {
+  background:
+    radial-gradient(ellipse 60% 45% at 85% 5%, rgb(32 183 213 / 30%), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 0% 100%, rgb(53 190 132 / 22%), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 30% 40%, rgb(20 140 224 / 18%), transparent 70%);
+  animation: login-aurora 14s ease-in-out infinite alternate;
+}
+
+.login-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 4%) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 85%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 85%);
+}
+
+.login-form-side {
+  background:
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(20 140 224 / 6%), transparent 70%),
+    radial-gradient(ellipse 50% 35% at 0% 100%, rgb(53 190 132 / 5%), transparent 70%),
+    #fff;
+}
+
+.login-orbit {
+  transform-origin: 200px 200px;
+  animation: login-spin 60s linear infinite;
+}
+
+.login-orbit-reverse {
+  animation-duration: 45s;
+  animation-direction: reverse;
+}
+
+.login-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: login-pulse 3.2s ease-in-out infinite;
+}
+
+@keyframes login-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes login-pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.7); }
+}
+
+@keyframes login-aurora {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-3%, 2%, 0) scale(1.08); }
+}
+
+/* Footer */
+.site-footer {
+  background: linear-gradient(180deg, #072349 0%, #051a36 100%);
+}
+
+.site-footer-glow {
+  background:
+    radial-gradient(ellipse 50% 40% at 0% 0%, rgb(20 140 224 / 18%), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 100% 100%, rgb(53 190 132 / 12%), transparent 70%);
+}
+
+.footer-link {
+  position: relative;
+  display: inline-block;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: #fff;
+  transform: translateX(3px);
+}
+
+/* Hero entrance: staggered fade-up, delays set inline. "backwards" (not "both") so no transform lingers afterwards:
+   a held transform would trap the full-screen globe overlay inside the hero column. */
+.hero-enter {
+  animation: hero-enter 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.hero-enter-globe {
+  animation: hero-enter-globe 1.2s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes hero-enter {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hero-enter-globe {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Full-screen globe explore view: deep-space backdrop behind the WebGL starfield. */
+.globe-space {
+  background:
+    radial-gradient(ellipse 45% 40% at 50% 50%, rgb(32 120 213 / 22%), transparent 70%),
+    radial-gradient(ellipse 35% 30% at 85% 15%, rgb(120 80 200 / 14%), transparent 70%),
+    radial-gradient(ellipse 30% 30% at 10% 85%, rgb(32 183 213 / 12%), transparent 70%),
+    radial-gradient(ellipse at center, #071630 0%, #030a18 55%, #01040b 100%);
+}
+
+
+/* Join network landing page */
+.join-hero-dark {
+  background: linear-gradient(160deg, #0a2f5f 0%, #072349 50%, #051a36 100%);
+}
+
+.member-card {
+  background:
+    radial-gradient(circle at 15% 0%, rgb(92 200 245 / 55%), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgb(53 190 132 / 55%), transparent 55%),
+    linear-gradient(135deg, #0f5ea8 0%, #0b3a75 55%, #0a6b6a 100%);
+  transform-style: preserve-3d;
+}
+
+.member-card-shine {
+  background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 22%) 45%, transparent 60%);
+  background-size: 250% 100%;
+  animation: member-card-shine 5s ease-in-out infinite;
+}
+
+.plan-featured {
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgb(32 183 213 / 30%), transparent 70%),
+    linear-gradient(160deg, #0b3a75 0%, #082b59 60%, #061f40 100%);
+}
+
+.join-apply {
+  background: linear-gradient(160deg, #072349 0%, #051a36 100%);
+}
+
+.cta-rings {
+  background:
+    radial-gradient(circle at 90% 20%, transparent 120px, rgb(255 255 255 / 10%) 121px, transparent 123px),
+    radial-gradient(circle at 90% 20%, transparent 200px, rgb(255 255 255 / 8%) 201px, transparent 203px),
+    radial-gradient(circle at 5% 100%, transparent 150px, rgb(255 255 255 / 8%) 151px, transparent 153px);
+}
+
+@keyframes member-card-shine {
+  0%, 100% { background-position: 120% 0; }
+  50% { background-position: -20% 0; }
+}
+
+/* Full-screen globe controls fade in once the globe has settled. */
+.globe-ui-in {
+  animation: globe-ui-in 0.5s ease-out 0.55s backwards;
+}
+
+@keyframes globe-ui-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The canvas always fills its box; the camera projects for that box even while its buffer catches up. */
+.globe-stage-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Membership application wizard: one step per view on desktop, natural height on small screens. */
+.wizard-shell {
+  overflow: hidden;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 40px 90px rgb(0 0 0 / 30%);
+}
+
+@media (min-width: 1024px) {
+  .wizard-shell {
+    height: min(780px, calc(100dvh - 6rem));
+  }
+}
+
+.wizard-rail {
+  background: linear-gradient(170deg, #0b3a75 0%, #082b59 55%, #061f40 100%);
+}
+
+/* Wizard step list scrolls only on very short screens, keeping the selected plan card in view. */
+.wizard-steps {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 20%) transparent;
+}
+
+/* Admin dashboard */
+.admin-sidebar {
+  background: linear-gradient(180deg, #082b59 0%, #061f40 100%);
 }

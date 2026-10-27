@@ -8,30 +8,36 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test:membership": "node --experimental-strip-types --test tests/membership-verification.test.mjs tests/google-address.test.mjs"
+    "test:membership": "node --experimental-strip-types --test tests/membership-verification.test.mjs tests/google-address.test.mjs tests/business-identity.test.mjs",
+    "admin": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/admin.mjs",
+    "db:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-check.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
+    "libphonenumber-js": "1.13.15",
     "lucide-react": "^1.57.0",
+    "mongodb": "7.7.0",
     "motion": "^14.2.0",
     "next": "16.4.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "0.0.1",
     "three": "^0.186.1",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
-    "@types/google.maps": "^3.58.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/turbopack": "^4",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/topojson-client": "^3.1.5",
     "eslint": "^9",
     "eslint-config-next": "16.4.1",
+    "mongodb-memory-server": "11.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -11,6 +11,7 @@ import {
 import { GlobeLoader } from "@/components/globe/globe-loader";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { CountUp } from "@/components/ui/count-up";
 
 const trustPoints = [
   { icon: BadgeCheck, label: "Verified network" },
@@ -23,16 +24,9 @@ export function HeroSection() {
     <section className="hero-section relative isolate overflow-hidden bg-[#082b59] text-white">
       <div className="hero-grid pointer-events-none absolute inset-0 -z-10 opacity-30" />
       <div className="hero-contours pointer-events-none absolute inset-0 -z-10 opacity-20" />
-      <Container className="grid min-h-[680px] items-center gap-0 py-12 min-[900px]:min-h-[700px] min-[900px]:grid-cols-[0.94fr_1.06fr] min-[900px]:py-8">
+      <Container className="grid min-h-[680px] items-center gap-0 pb-24 pt-12 min-[900px]:min-h-[720px] min-[900px]:grid-cols-[0.94fr_1.06fr] min-[900px]:pb-24 min-[900px]:pt-8">
         <div className="relative z-10 max-w-[590px] py-5 min-[900px]:py-0">
-          <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-[#20b7d5]/25 bg-[#20b7d5]/[0.08] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#b7edf0] sm:text-[11px]">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#35be84] opacity-50" />
-              <span className="relative inline-flex size-2 rounded-full bg-[#35be84]" />
-            </span>
-            GLOBAL CONNECTIONS. REAL BUSINESS OPPORTUNITIES.
-          </div>
-          <h1 className="max-w-[620px] text-[clamp(3.15rem,5vw,4.5rem)] font-semibold leading-[1.04] tracking-[-0.035em]">
+          <h1 style={{ animationDelay: "0.15s" }} className="hero-enter max-w-[620px] text-[clamp(3.15rem,5vw,4.5rem)] font-semibold leading-[1.04] tracking-[-0.035em]">
             Collaborate
             <br />
             Together.
@@ -42,13 +36,13 @@ export function HeroSection() {
               Globally.
             </span>
           </h1>
-          <p className="mt-6 max-w-[540px] text-[15px] leading-7 text-[#e4edf7]/75 sm:text-base sm:leading-[1.85]">
+          <p style={{ animationDelay: "0.28s" }} className="hero-enter mt-6 max-w-[540px] text-[15px] leading-7 text-[#e4edf7]/75 sm:text-base sm:leading-[1.85]">
             MNC Global Connect brings businesses, entrepreneurs, buyers, sellers
             and international partners together through qualified connections,
             B2B meetings, trade opportunities, events, delegations and global
             market access.
           </p>
-          <div className="mt-7 flex flex-col gap-3 min-[1100px]:flex-row">
+          <div style={{ animationDelay: "0.4s" }} className="hero-enter mt-7 flex flex-col gap-3 min-[1100px]:flex-row">
             <Button href="/opportunities" className="min-h-[50px]">
               Explore Global Opportunities
               <ArrowRight
@@ -65,7 +59,7 @@ export function HeroSection() {
             </Button>
           </div>
           <LinkJoin />
-          <ul className="mt-7 flex max-w-[590px] flex-wrap gap-x-5 gap-y-3 border-t border-white/[0.14] pt-5">
+          <ul style={{ animationDelay: "0.55s" }} className="hero-enter mt-7 flex max-w-[590px] flex-wrap gap-x-5 gap-y-3 border-t border-white/[0.14] pt-5">
             {trustPoints.map(({ icon: Icon, label }) => (
               <li
                 key={label}
@@ -77,7 +71,7 @@ export function HeroSection() {
             ))}
           </ul>
         </div>
-        <div className="relative mx-auto w-full max-w-[640px] min-[900px]:ml-auto">
+        <div style={{ animationDelay: "0.2s" }} className="hero-enter-globe relative mx-auto w-full max-w-[640px] min-[900px]:ml-auto">
           <GlobeLoader />
         </div>
       </Container>
@@ -143,7 +137,7 @@ export function StatsSection() {
               </span>
               <div>
                 <p className="text-[25px] font-bold leading-none tracking-tight text-[#082b59] sm:text-[29px]">
-                  {value}
+                  <CountUp value={value} />
                 </p>
                 <p className="mt-2 text-[11px] font-semibold leading-tight text-[#243a55] sm:text-xs">
                   {label}

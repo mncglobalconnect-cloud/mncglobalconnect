@@ -1,0 +1,9 @@
+Core services photos: Unsplash (https://unsplash.com/license), free for commercial use,
+attribution not required. Cropped to 900x600 and converted to WebP.
+
+networking-handshake.webp https://images.unsplash.com/photo-1521791136064-7986c2920216
+opportunities-port.webp https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3
+events-conference.webp https://images.unsplash.com/photo-1511578314322-379afb476865
+b2b-laptop-meeting.webp https://images.unsplash.com/photo-1517245386807-bb43f82c33c4
+market-access-earth.webp https://images.unsplash.com/photo-1446776811953-b23d57bd21aa
+tenders-signing.webp https://images.unsplash.com/photo-1450101499163-c8848c66ca85

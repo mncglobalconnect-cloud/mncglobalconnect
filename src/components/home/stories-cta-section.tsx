@@ -133,28 +133,3 @@ export function GlobalCtaSection() {
     </section>
   );
 }
-
-export function BusinessUpdatesSection() {
-  return (
-    <section className="bg-[#f5f9fd] py-12 sm:py-14">
-      <Container className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="max-w-2xl">
-          <p className="section-eyebrow">Business updates</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#082b59]">
-            Stay informed on global business opportunities.
-          </h2>
-          <p className="mt-2 text-xs leading-6 text-[#718096]">
-            Explore market insights, practical guides and upcoming business programmes.
-          </p>
-        </div>
-        <Button
-          href="/resources"
-          variant="text"
-          className="w-fit !text-[#0878c7]"
-        >
-          Browse business insights <ArrowUpRight aria-hidden="true" className="size-4" />
-        </Button>
-      </Container>
-    </section>
-  );
-}

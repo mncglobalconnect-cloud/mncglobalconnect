@@ -10,12 +10,12 @@ import {
 } from "@/components/home/facilitation-sections";
 import { GlobalNetworkSection } from "@/components/home/global-network-section";
 import {
-  BusinessUpdatesSection,
   GlobalCtaSection,
   SuccessStoriesSection,
 } from "@/components/home/stories-cta-section";
 import { HeroSection, StatsSection } from "@/components/home/hero-section";
 import { SiteShell } from "@/components/layout/site-shell";
+import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
   title: "Global Business Networking, Opportunities & Market Access",
@@ -38,17 +38,16 @@ export default function Home() {
         <HeroSection />
         <StatsSection />
         <CoreServicesSection />
-        <FeaturedOpportunitiesSection />
-        <BusinessJourneySection />
-        <UpcomingEventsSection />
-        <GlobalNetworkSection />
-        <MatchmakingSection />
-        <GlobalFacilitationSection />
-        <WhyMncSection />
-        <MncEcosystemSection />
-        <SuccessStoriesSection />
-        <GlobalCtaSection />
-        <BusinessUpdatesSection />
+        <Reveal y={28}><FeaturedOpportunitiesSection /></Reveal>
+        <Reveal y={28}><BusinessJourneySection /></Reveal>
+        <Reveal y={28}><UpcomingEventsSection /></Reveal>
+        <Reveal y={28}><GlobalNetworkSection /></Reveal>
+        <Reveal y={28}><MatchmakingSection /></Reveal>
+        <Reveal y={28}><GlobalFacilitationSection /></Reveal>
+        <Reveal y={28}><WhyMncSection /></Reveal>
+        <Reveal y={28}><MncEcosystemSection /></Reveal>
+        <Reveal y={28}><SuccessStoriesSection /></Reveal>
+        <Reveal y={28}><GlobalCtaSection /></Reveal>
       </main>
     </SiteShell>
   );

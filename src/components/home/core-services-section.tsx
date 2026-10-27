@@ -10,6 +10,7 @@ import {
   RadioTower,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 
@@ -17,38 +18,44 @@ const services = [
   {
     icon: Network,
     title: "Business Networking",
-    description: "Build relevant relationships across international markets.",
+    description: "Connect with verified business owners, industry communities and decision-makers across domestic and international markets.",
     href: "/network",
+    image: "/images/services/networking-handshake.webp",
   },
   {
     icon: BriefcaseBusiness,
     title: "Business Opportunities",
-    description: "Explore buyer needs, supplier leads and partnerships.",
+    description: "Discover buyer requirements, supplier leads, joint ventures and partnership offers shared by members worldwide.",
     href: "/opportunities",
+    image: "/images/services/opportunities-port.webp",
   },
   {
     icon: CalendarDays,
     title: "Events & Delegations",
-    description: "Meet people and explore markets through business programmes.",
+    description: "Meet international partners at networking events, business forums, trade missions and delegations.",
     href: "/events",
+    image: "/images/services/events-conference.webp",
   },
   {
     icon: Handshake,
     title: "B2B Meetings",
-    description: "Move from relevant requirements to focused conversations.",
+    description: "Turn qualified requirements into structured one-to-one meetings with relevant partners.",
     href: "/b2b-meetings",
+    image: "/images/services/b2b-laptop-meeting.webp",
   },
   {
     icon: RadioTower,
     title: "Global Market Access",
-    description: "Find the right connections to support your market exploration.",
+    description: "Enter new markets with partner identification, buyer connections and market-entry support.",
     href: "/market-access",
+    image: "/images/services/market-access-earth.webp",
   },
   {
     icon: PackageCheck,
     title: "Tenders & Trade Leads",
-    description: "Discover cross-border trade and project opportunities.",
+    description: "Track import, export and cross-border project opportunities matched to your industry.",
     href: "/trade-opportunities",
+    image: "/images/services/tenders-signing.webp",
   },
 ];
 
@@ -81,58 +88,62 @@ export function CoreServicesSection() {
     <motion.section
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: true, amount: 0.15 }}
       variants={sectionVariants}
-      className="relative isolate overflow-hidden bg-[#f5f9fd] py-[72px] sm:py-[84px]"
+      className="relative isolate overflow-hidden bg-[#f4f8fc] py-[76px] sm:py-[96px]"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_0%,rgba(20,140,224,0.045),transparent_58%)]"
-      />
+      <div aria-hidden="true" className="services-backdrop pointer-events-none absolute inset-0 -z-10" />
       <Container>
-        <motion.div variants={revealVariants} className="mb-8 max-w-2xl">
-          <p className="section-eyebrow">A platform built for business</p>
-          <h2 className="section-title mt-3 leading-[1.2] [text-rendering:optimizeLegibility]">
+        <motion.div variants={revealVariants} className="mb-10 max-w-2xl lg:mb-12">
+          <p className="section-eyebrow">Our core services</p>
+          <h2 className="section-title mt-3 leading-[1.15] [text-rendering:optimizeLegibility]">
             Everything you need to
             <br className="hidden sm:block" />{" "}
             <span className="brand-text-gradient">grow globally.</span>
           </h2>
         </motion.div>
-        <motion.div
+        <motion.ul
           variants={gridVariants}
-          className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-5"
         >
-          {services.map(({ icon: Icon, title, description, href }) => (
-            <motion.div
-              key={title}
-              variants={revealVariants}
-              className="h-full"
-            >
+          {services.map(({ icon: Icon, title, description, href, image }) => (
+            <motion.li key={title} variants={revealVariants} className="h-full">
               <Link
                 href={href}
-                className="group relative flex min-h-[158px] h-full cursor-pointer items-start gap-4 rounded-[20px] border border-[#e4ebf3] bg-white p-5 shadow-[0_3px_12px_rgba(16,33,58,0.025)] transition-[transform,border-color,background-color,box-shadow] duration-300 ease-out hover:-translate-y-[5px] hover:border-[#c4dff0] hover:bg-[#feffff] hover:shadow-[0_12px_28px_rgba(16,33,58,0.075)] focus-visible:border-[#92c8e8] focus-visible:shadow-[0_8px_24px_rgba(20,140,224,0.12)] sm:p-6"
+                className="group relative isolate grid h-full min-h-[220px] grid-cols-[minmax(0,1fr)_30%] overflow-hidden rounded-[20px] border border-[#e3ebf4] bg-white shadow-[0_6px_22px_rgba(16,33,58,0.06)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-[#c8def0] hover:shadow-[0_18px_40px_rgba(16,33,58,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#148ce0]/60"
               >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-[#eef5fa] text-[#148ce0] transition-[transform,background-color,color] duration-300 ease-out group-hover:scale-[1.03] group-hover:bg-[#e5f5fb] group-hover:text-[#0878c7]">
-                  <Icon aria-hidden="true" className="size-5" />
+                <span aria-hidden="true" className="service-card-image relative col-start-2 row-start-1 overflow-hidden">
+                  <Image
+                    src={image}
+                    alt=""
+                    fill
+                    sizes="(max-width: 767px) 30vw, (max-width: 1279px) 15vw, 150px"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                  />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-semibold text-[#10213a] transition-colors duration-200 group-hover:text-[#082b59]">
-                    {title}
+                <span className="col-start-1 row-start-1 flex flex-col items-start gap-4 py-6 pl-6 pr-3 sm:pl-7">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-[#eaf4fc] text-[#148ce0] transition-colors duration-300 group-hover:bg-[#148ce0] group-hover:text-white">
+                    <Icon aria-hidden="true" className="size-[22px]" strokeWidth={1.8} />
                   </span>
-                  <span className="mt-2 block max-w-[290px] text-[12px] leading-[1.65] text-[#718096] transition-colors duration-200 group-hover:text-[#5d6f86]">
-                    {description}
+                  <span className="min-w-0">
+                    <span className="block text-[17px] font-bold leading-snug tracking-[-0.01em] text-[#0b2347] sm:text-[18px]">
+                      {title}
+                    </span>
+                    <span className="mt-2 block text-[13.5px] leading-[1.65] text-[#43566e]">
+                      {description}
+                    </span>
                   </span>
                 </span>
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#9aabba] transition-[background-color,color] duration-200 group-hover:bg-[#eff7fc] group-hover:text-[#148ce0]">
+                <span className="absolute bottom-4 right-4 flex size-11 items-center justify-center rounded-full bg-white text-[#148ce0] shadow-[0_6px_18px_rgba(8,43,89,0.18)] transition-colors duration-300 group-hover:bg-[#148ce0] group-hover:text-white">
                   <ArrowRight
                     aria-hidden="true"
-                    className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-[5px]"
+                    className="size-[18px] transition-transform duration-200 ease-out group-hover:translate-x-0.5"
                   />
                 </span>
               </Link>
-            </motion.div>
+            </motion.li>
           ))}
-        </motion.div>
+        </motion.ul>
       </Container>
     </motion.section>
   );

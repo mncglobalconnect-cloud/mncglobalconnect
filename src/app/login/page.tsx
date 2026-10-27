@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/layout/route-placeholder";
+import { LoginExperience } from "@/components/auth/login-experience";
 
-export const metadata: Metadata = { title: "Sign In" };
+export const metadata: Metadata = {
+  title: "Sign In",
+  description: "Sign in to your MNC Global Connect member account.",
+};
 
 export default function LoginPage() {
-  return (
-    <RoutePlaceholder
-      title="Welcome Back"
-      description="Sign-in experience for the shared MNC ecosystem identity will be connected to the authentication service."
-    />
-  );
+  return <LoginExperience />;
 }

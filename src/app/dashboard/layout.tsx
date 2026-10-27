@@ -1,7 +1,12 @@
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { getCurrentUser } from "@/lib/server/session";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
+  // Member area: only signed-in, active accounts. Pages re-check before reading member data.
+  const user = await getCurrentUser().catch(() => null);
+  if (!user) redirect("/login");
   return children;
 }

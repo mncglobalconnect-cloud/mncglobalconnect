@@ -22,116 +22,132 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Interactive hero Earth
 
-The existing hero uses a lazy-loaded React Three Fiber scene. Drag the circular
-Earth area to rotate; use the wheel or two-finger pinch to zoom. Page scrolling
-remains available outside that circle. Keyboard users can focus it and use
-arrow keys, `+` / `-`, and `Home` to reset. Double-click toggles a closer view.
-Camera distance is smoothly bounded to 2.2–4.5 scene units. Auto-rotation pauses
-on interaction and ramps up after 2.5 seconds of inactivity.
+The hero uses a lazy-loaded React Three Fiber scene with a custom Earth shader:
+sunlit day side with ocean glint, a soft terminator, city lights on the night
+side, clouds and an atmosphere rim.
 
-Reduced motion disables automatic rotation, cloud movement, travel particles,
-and parallax; manual controls still work. Rendering pauses off-screen and in
-hidden tabs. Mobile uses a smaller surface map and capped pixel ratio.
-Texture-loading failures and unavailable/lost WebGL show a static Earth with an
-explicit status instead of an empty hero. Errors are logged to the console.
+**Member locations.** Markers come from `GET /api/member-locations`
+([route](./src/app/api/member-locations/route.ts)), fetched on load and refreshed
+every 60 seconds while the tab is visible. Marker size follows member count, and
+arcs run from the hub city to the largest international locations. The route
+currently serves **sample data** from
+[src/data/member-locations.ts](./src/data/member-locations.ts). Replace it with a
+database aggregate of verified member business addresses (city, country,
+latitude/longitude, member count). Keep the response shape in
+[src/types/member-location.ts](./src/types/member-location.ts).
 
-Textures are served locally from `public/images/earth`, about 412 KiB combined.
-They are adapted from [Solar System Scope](https://www.solarsystemscope.com/textures/)
-under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); source names and
-modifications are listed in [the asset attribution](./public/images/earth/ATTRIBUTION.txt).
-The static fallback is a shaded orthographic projection of the same imagery.
-No external texture service is contacted by visitors.
+**Controls.** Click or tap a marker to fly to it and open its card (previous,
+next, and back to the full globe). Click anywhere else on Earth to zoom there.
+Drag to rotate; dragging clears the selection. Wheel or pinch zooms within
+1.45 to 4.5 scene units. Keyboard: focus the globe, then Enter/N and P cycle
+locations, arrows rotate, `+` / `-` zoom, Escape/Home resets. Auto-rotation
+pauses on interaction and while a location is focused.
 
-Run `node --experimental-strip-types --test tests/globe-motion.test.mjs` for zoom
-direction/limits, pinch, interpolation, and auto-rotation timing checks.
-Browser validation should also cover drag, touch, page scrolling outside the
-globe, reduced-motion controls, navigation, and WebGL failure.
+Reduced motion disables auto-rotation, cloud movement, travel particles, marker
+pulses and parallax; manual controls still work. Rendering pauses off-screen and
+in hidden tabs. Texture-loading failures and unavailable/lost WebGL show a
+static Earth with an explicit status. Errors are logged to the console.
 
-## Membership application prototype
+Textures are served locally from `public/images/earth`. Desktop loads a 4K day
+map and night lights (~0.7 MiB). Mobile loads 2K versions (~0.1 MiB). The first
+close zoom loads a sharper day map: 8K on desktop GPUs that support it
+(1.4 MiB), otherwise 4K on mobile. Imagery is adapted from
+[Solar System Scope](https://www.solarsystemscope.com/textures/) under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see
+[the asset attribution](./public/images/earth/ATTRIBUTION.txt).
 
-The membership conversion page is at `/join-network`. Website joining CTAs
-link there, and `/register` redirects to it.
+Run `node --experimental-strip-types --test tests/globe-motion.test.mjs` for
+zoom, pinch, damping, auto-rotation and focus-angle checks.
 
-- Annual India / Global prices and proposed benefits are editable in
-  [src/data/membership.ts](./src/data/membership.ts). Prices and benefits are
-  illustrative, not approved commercial terms.
-- Application models are in [src/types/membership.ts](./src/types/membership.ts).
-  The eight-step form validates required fields, URLs and country-specific
-  address information before creating a demo reference.
-- Country / state lookups use `/api/locations`, a server-side proxy for the public
-  CountriesNow service. Only the selected country and state are sent to that
-  provider; no address, identifiers or documents are sent. Internet access is
-  required. Responses are cached for a day; provider coverage and administrative
-  names may be incomplete or outdated.
-- Location fields cascade from country to state / province to city / locality.
-  The provider supplies localities, not authoritative districts. Manual entry is
-  explicitly available for missing locations and service failures, with retry.
-  Changing country clears dependent location fields, verification identifiers
-  and document metadata; changing state clears dependent locality/address fields.
-- Verification fields and proposed document checklists follow the **business
-  country**, independently of residence and billing region. Country profiles and
-  the clearly marked general fallback are editable in
-  [src/data/membership-verification.ts](./src/data/membership-verification.ts).
-  These are prototype review guidelines, not approved legal requirements.
-  Required / conditional guidance is displayed, but selections stay optional.
-  Run `npm run test:membership` (Node 22.6+ with type stripping) to check profiles.
-- Application data is not submitted to a server. Email, OTP, business review, payment, membership
-  activation, referral validation and actual document uploads are not connected.
-- Save Progress explicitly stores the full draft in localStorage on this device
-  (`mnc-membership-draft-v1`), including any optional identifiers entered. Do not
-  enter confidential data or save drafts on shared devices. Restore Saved Draft
-  reloads it. Clearing site data removes saved drafts and demo references.
-- Document previews accept PDF/JPG/PNG up to 5 MB per file. Only metadata is
-  retained; file contents are not read, stored or uploaded.
-- Submission stores only a local reference, creation date and membership
-  selection (`mnc-membership-receipt-v1`). View Local Demo Status reads that
-  reference. It is not a live application status or a member ID.
+## Membership landing page
+
+The membership page is at `/join-network`
+([join-landing.tsx](./src/components/membership/join-landing.tsx)). Website
+joining CTAs link there, and `/register` redirects to it. It has a hero, network
+stats, benefits, a four-step overview, plans with an India / Global currency
+switch and an expandable comparison table, the application form, FAQs and a
+closing call to action.
+
+- Annual India / Global prices and plan benefits are editable in
+  [src/data/membership.ts](./src/data/membership.ts). They are proposals, not
+  approved commercial terms.
+- The application ([application-wizard.tsx](./src/components/membership/application-wizard.tsx))
+  has eight steps: personal details, business profile, location, verification,
+  networking interests, plan, documents, and review. On desktop each step fits in
+  one view with a step rail and a Next button; on small screens it flows naturally.
+  Steps already completed can be revisited from the rail or from Edit on the review.
+- Fields follow the **country**: the mobile calling code, example and validation
+  ([libphonenumber-js](https://www.npmjs.com/package/libphonenumber-js)); states and
+  cities from `/api/locations` with manual entry when unlisted; the postal code
+  label and format; the registration numbers asked for and their formats (e.g.
+  GSTIN, CIN, Udyam and IEC in India, VAT in Germany); and the required documents.
+  Rules are in [src/lib/business-identity.ts](./src/lib/business-identity.ts),
+  [src/data/membership-verification.ts](./src/data/membership-verification.ts) and
+  [application-validation.ts](./src/components/membership/application-validation.ts).
+  Formats are review aids, not legal requirements; countries without a profile
+  get a general one. Run `npm run test:membership` to check them.
+- Submitted applications, their documents (MongoDB GridFS) and declarations are
+  stored in MongoDB; see **Database & member accounts** below. Save draft keeps the
+  form on this device only (`mnc-membership-draft-v1`) and leaves documents out.
 - Live use requires approved membership terms and privacy/retention rules,
-  secure backend persistence, verification and storage APIs, final pricing,
-  review workflows and payment integration.
+  secure backend persistence, verification, review workflows and payment
+  integration.
 
-## Google address autocomplete and maps
+## Database & member accounts
 
-Join Network's Business Location step supports opt-in Google Places address
-autocomplete and an on-demand map preview. Without configuration, the form
-explicitly reports that Google is unavailable; existing location dropdowns and
-manual address entry continue to work.
+All forms store data in MongoDB. Configure `.env.local` (see `.env.example`):
 
-1. In a Google Cloud project with billing, enable **Maps JavaScript API**,
-   **Places API (New)**, and **Maps Embed API**.
-2. Create a browser API key with **Websites / HTTP referrer restrictions**.
-   Allow only your development and production origins, for example
-   `http://localhost:3000/*` and `https://your-domain.example/*`.
-   Restrict the key to the three APIs above. Set appropriate quotas, monitoring
-   and budget alerts; alerts do not enforce a spending cap.
-3. Copy `.env.example` to `.env.local` and set
-   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` locally. Never put a server secret in this
-   variable. The browser key is intentionally public and must be restricted.
-4. Restart the development server. Production requires the variable to be set
-   **before building** and a fresh deployment after changing it.
-5. Open `/join-network`, go to Business Location, enable Google address search,
-   select a suggestion, review the filled fields, and click **Preview map**.
+- `MONGODB_URI`: connection string. The database user needs `readWrite` on the
+  database named in `MONGODB_DB`.
+- `MONGODB_DB`: database name (default `mnc_global_connect`).
+- `APP_URL`: site URL used in password links printed by the admin command.
 
-The new `PlaceAutocompleteElement` widget is used, not the legacy Autocomplete
-API. Google results fill country, state, district/locality, city, street address,
-postal code and a Maps link. Missing details remain empty for explicit review;
-do not assume an address result verifies a business. A country change also
-clears verification identifiers and document metadata. State/locality names
-from Google may differ from CountriesNow; returned values are retained for
-review. Existing address fields remain editable. Editing address fields clears
-the generated Maps link to avoid retaining a stale place pin.
+Collections (indexes are created automatically on first use):
 
-Search only connects to Google after the user enables it. Map iframes only load
-after **Preview map** is clicked. Search queries / selected location are then
-sent to Google under Google's terms and privacy policy; the production privacy
-notice must describe this processing. Google's widget branding is retained.
-Browser/network errors are shown; billing, authorization, or Embed API errors
-may also appear in Google's widget or map frame. No real-key integration has
-been configured by this repository.
+| Collection | Contents |
+|---|---|
+| `applications` | Membership applications: applicant, business, address, registrations, interests, plan, declarations, document references, status (`submitted` / `approved` / `rejected`) |
+| `applicationDocuments.files` / `.chunks` | Uploaded verification documents (GridFS). Type is checked from file contents; PDF, JPG or PNG up to 5 MB |
+| `users` | Member accounts (created on approval). Passwords are scrypt hashes |
+| `sessions` | Login sessions; only a SHA-256 hash of the cookie token is stored. Expire automatically |
+| `passwordTokens` | One-time set-up / reset links (hashed, single use, auto-expiring) |
+| `contactEnquiries` | Contact form messages |
+| `newsletterSubscribers` | Newsletter sign-ups (one per email) |
 
-**Official India state/district data is deferred** until an approved official
-LGD CSV/JSON export or dataset URL is supplied. The existing district/city/locality
-dropdown still uses CountriesNow and is not an authoritative district register.
+### Admin dashboard (`/admin-dashboard`)
+
+Only accounts with the `admin` role can open it (others get a 404; signed-out visitors go to
+`/login`). Admins land there after signing in. Create the first admin from the command line:
+
+```bash
+npm run admin -- create-admin you@company.com "Your Name"   # prints a set-password link
+```
+
+| Section | What you can do |
+|---|---|
+| Overview | Pending applications, active members, new enquiries, subscribers; latest activity |
+| Applications | Filter by status, search; open an application to see every step, view / download documents, **Approve & create account** (shows the member's one-time password link to copy) or **Reject** |
+| Members | Search and filter; issue a password link; disable (signs the member out) or re-enable |
+| Enquiries | Read contact messages, reply by email, mark handled / reopen |
+| Subscribers | Search and **Export CSV** |
+
+Admin APIs live under `/api/admin/*` and refuse non-admins with 403.
+
+Accounts are created only when an application is approved (in the dashboard, or from the
+command line):
+
+```bash
+npm run admin -- list                      # applications awaiting review
+npm run admin -- approve MNC-1A2B3C        # creates the account, prints a set-password link
+npm run admin -- reject MNC-1A2B3C
+npm run admin -- password-link member@company.com   # new set-up / reset link
+```
+
+No email service is connected yet: send the printed link to the member yourself.
+Forgot-password requests create a link that is logged on the server in development only;
+in production, issue one with `password-link`. Login locks for 15 minutes after 5 failed
+attempts. Signed-in members see their membership at `/dashboard`; the session cookie is
+HTTP-only, SameSite=Lax and Secure in production. All write endpoints reject cross-site requests.
 
 ## Learn More
 
