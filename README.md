@@ -20,6 +20,33 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Interactive hero Earth
+
+The existing hero uses a lazy-loaded React Three Fiber scene. Drag the circular
+Earth area to rotate; use the wheel or two-finger pinch to zoom. Page scrolling
+remains available outside that circle. Keyboard users can focus it and use
+arrow keys, `+` / `-`, and `Home` to reset. Double-click toggles a closer view.
+Camera distance is smoothly bounded to 2.2–4.5 scene units. Auto-rotation pauses
+on interaction and ramps up after 2.5 seconds of inactivity.
+
+Reduced motion disables automatic rotation, cloud movement, travel particles,
+and parallax; manual controls still work. Rendering pauses off-screen and in
+hidden tabs. Mobile uses a smaller surface map and capped pixel ratio.
+Texture-loading failures and unavailable/lost WebGL show a static Earth with an
+explicit status instead of an empty hero. Errors are logged to the console.
+
+Textures are served locally from `public/images/earth`, about 412 KiB combined.
+They are adapted from [Solar System Scope](https://www.solarsystemscope.com/textures/)
+under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); source names and
+modifications are listed in [the asset attribution](./public/images/earth/ATTRIBUTION.txt).
+The static fallback is a shaded orthographic projection of the same imagery.
+No external texture service is contacted by visitors.
+
+Run `node --experimental-strip-types --test tests/globe-motion.test.mjs` for zoom
+direction/limits, pinch, interpolation, and auto-rotation timing checks.
+Browser validation should also cover drag, touch, page scrolling outside the
+globe, reduced-motion controls, navigation, and WebGL failure.
+
 ## Membership application prototype
 
 The membership conversion page is at `/join-network`. Website joining CTAs

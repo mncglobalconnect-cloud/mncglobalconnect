@@ -68,6 +68,30 @@ button {
   background: var(--gradient);
 }
 
+.hero-section {
+  background: radial-gradient(circle at 70% 40%, #103a60 0%, #0a294a 35%, #071b31 70%, #051525 100%);
+}
+
+.globe-interaction {
+  cursor: grab;
+  touch-action: none;
+}
+
+.globe-interaction[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+.hero-earth {
+  height: clamp(380px, 100vw, 480px);
+}
+
+@media (min-width: 900px) {
+  .hero-earth {
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
+
 .hero-grid {
   background-image:
     linear-gradient(rgb(255 255 255 / 4%) 1px, transparent 1px),

@@ -21,11 +21,9 @@ const trustPoints = [
 export function HeroSection() {
   return (
     <section className="hero-section relative isolate overflow-hidden bg-[#082b59] text-white">
-      <div className="hero-grid pointer-events-none absolute inset-0 -z-10" />
-      <div className="hero-contours pointer-events-none absolute inset-0 -z-10 opacity-50" />
-      <div className="pointer-events-none absolute -left-40 top-16 -z-10 size-[32rem] rounded-full bg-[#148ce0]/16 blur-3xl" />
-      <div className="pointer-events-none absolute -right-28 top-24 -z-10 size-[30rem] rounded-full bg-[#20b7d5]/10 blur-3xl" />
-      <Container className="grid min-h-[680px] items-center gap-0 py-12 min-[900px]:min-h-[700px] min-[900px]:grid-cols-[0.9fr_1.1fr] min-[900px]:py-8">
+      <div className="hero-grid pointer-events-none absolute inset-0 -z-10 opacity-30" />
+      <div className="hero-contours pointer-events-none absolute inset-0 -z-10 opacity-20" />
+      <Container className="grid min-h-[680px] items-center gap-0 py-12 min-[900px]:min-h-[700px] min-[900px]:grid-cols-[0.94fr_1.06fr] min-[900px]:py-8">
         <div className="relative z-10 max-w-[590px] py-5 min-[900px]:py-0">
           <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-[#20b7d5]/25 bg-[#20b7d5]/[0.08] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#b7edf0] sm:text-[11px]">
             <span className="relative flex size-2">
@@ -79,7 +77,7 @@ export function HeroSection() {
             ))}
           </ul>
         </div>
-        <div className="relative mx-auto w-full max-w-[560px] min-[900px]:ml-auto">
+        <div className="relative mx-auto w-full max-w-[640px] min-[900px]:ml-auto">
           <GlobeLoader />
         </div>
       </Container>

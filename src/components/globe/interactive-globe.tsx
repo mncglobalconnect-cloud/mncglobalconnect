@@ -1,154 +1,33 @@
 "use client";
 
-import { OrbitControls } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useMemo, useRef, type RefObject } from "react";
 import {
-  AdditiveBlending,
-  BufferAttribute,
-  BackSide,
-  CanvasTexture,
-  Group,
-  Mesh,
-  QuadraticBezierCurve3,
-  SRGBColorSpace,
-  Sprite,
-  TubeGeometry,
-  Vector3,
+  AdditiveBlending, BackSide, CatmullRomCurve3, Group, Mesh,
+  Spherical, SRGBColorSpace, TextureLoader, Vector2, Vector3,
 } from "three";
-import { feature } from "topojson-client";
-import type {
-  GeometryCollection,
-  GeometryObject,
-  Topology,
-} from "topojson-specification";
-import worldAtlas from "world-atlas/countries-110m.json";
-import { useEffect, useMemo, useRef } from "react";
+import {
+  dampValue, GLOBE_CAMERA, idleRotationSpeed, pinchDistance, zoomDistance,
+} from "@/lib/globe-motion";
+import { EarthFallback } from "./earth-fallback";
 
-const atmosphereVertex = `
-  varying vec3 vNormal;
-  void main() {
-    vNormal = normalize(normalMatrix * normal);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-const atmosphereFragment = `
-  varying vec3 vNormal;
-  void main() {
-    float intensity = pow(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.6);
-    gl_FragColor = vec4(0.13, 0.72, 0.9, 1.0) * intensity * 1.6;
-  }
-`;
-
-function Atmosphere() {
-  return (
-    <mesh scale={1.2}>
-      <sphereGeometry args={[1, 64, 64]} />
-      <shaderMaterial
-        vertexShader={atmosphereVertex}
-        fragmentShader={atmosphereFragment}
-        side={BackSide}
-        blending={AdditiveBlending}
-        transparent
-        depthWrite={false}
-      />
-    </mesh>
-  );
-}
-
-function Starfield({ count }: { count: number }) {
-  const positions = useMemo(() => {
-    const array = new Float32Array(count * 3);
-    let seed = 1337;
-    const random = () => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    };
-    for (let i = 0; i < count; i++) {
-      const radius = 4 + random() * 3;
-      const theta = random() * Math.PI * 2;
-      const phi = Math.acos(2 * random() - 1);
-      array[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      array[i * 3 + 1] = radius * Math.cos(phi);
-      array[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
-    }
-    return new BufferAttribute(array, 3);
-  }, [count]);
-  return (
-    <points>
-      <bufferGeometry>
-        <primitive object={positions} attach="attributes-position" />
-      </bufferGeometry>
-      <pointsMaterial color="#bfefff" size={0.022} transparent opacity={0.7} sizeAttenuation depthWrite={false} />
-    </points>
-  );
-}
-
-function OrbitRing({
-  tilt,
-  radius,
-  speed,
-  color,
-  reducedMotion,
-}: {
-  tilt: [number, number, number];
-  radius: number;
-  speed: number;
-  color: string;
+type Coordinate = readonly [number, number];
+type GlobeProps = {
   reducedMotion: boolean;
-}) {
-  const satelliteRef = useRef<Group>(null);
-  useFrame(({ clock }) => {
-    if (!satelliteRef.current || reducedMotion) return;
-    const angle = clock.elapsedTime * speed;
-    satelliteRef.current.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
-  });
-  return (
-    <group rotation={tilt}>
-      <mesh>
-        <torusGeometry args={[radius, 0.0025, 8, 160]} />
-        <meshBasicMaterial color={color} transparent opacity={0.28} />
-      </mesh>
-      <group ref={satelliteRef} position={[radius, 0, 0]}>
-        <mesh>
-          <sphereGeometry args={[0.028, 16, 16]} />
-          <meshBasicMaterial color={color} toneMapped={false} />
-        </mesh>
-        <mesh>
-          <sphereGeometry args={[0.06, 16, 16]} />
-          <meshBasicMaterial color={color} transparent opacity={0.18} toneMapped={false} />
-        </mesh>
-      </group>
-    </group>
-  );
-}
-
-type Coordinate = readonly [longitude: number, latitude: number];
-type Route = {
-  from: Coordinate;
-  to: Coordinate;
-  color: string;
-  phase: number;
+  visible: boolean;
+  mobile: boolean;
+  interactionRef: RefObject<HTMLDivElement | null>;
+  onInteraction: () => void;
+  onUnavailable: () => void;
+  onReady: () => void;
 };
 
-const routes: Route[] = [
-  { from: [78, 22], to: [55, 25], color: "#35be84", phase: 0 },
-  { from: [78, 22], to: [104, 1], color: "#20b7d5", phase: 0.12 },
-  { from: [78, 22], to: [-2, 54], color: "#148ce0", phase: 0.24 },
-  { from: [78, 22], to: [10, 51], color: "#35be84", phase: 0.36 },
-  { from: [78, 22], to: [-74, 41], color: "#20b7d5", phase: 0.48 },
-  { from: [78, 22], to: [102, 4], color: "#148ce0", phase: 0.6 },
-  { from: [78, 22], to: [134, -25], color: "#35be84", phase: 0.72 },
-  { from: [78, 22], to: [46, 24], color: "#20b7d5", phase: 0.84 },
-];
-
-type WorldTopology = Topology<{
-  countries: GeometryCollection;
-  land: GeometryObject;
-}>;
+const india: Coordinate = [78, 22];
+const destinations: Coordinate[] = [[55, 25], [104, 1], [102, 4], [10, 51], [37, -1], [-74, 41]];
 
 function coordinateToVector([longitude, latitude]: Coordinate, radius: number) {
-  const phi = ((90 - latitude) * Math.PI) / 180;
-  const theta = ((longitude + 180) * Math.PI) / 180;
+  const phi = (90 - latitude) * Math.PI / 180;
+  const theta = (longitude + 180) * Math.PI / 180;
   return new Vector3(
     -radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.cos(phi),
@@ -156,347 +35,309 @@ function coordinateToVector([longitude, latitude]: Coordinate, radius: number) {
   );
 }
 
-function drawGeometry(
-  context: CanvasRenderingContext2D,
-  geometry: GeoJSON.Geometry,
-  width: number,
-  height: number,
-) {
-  const drawRing = (coordinates: number[][]) => {
-    coordinates.forEach(([longitude, latitude], index) => {
-      const x = ((longitude + 180) / 360) * width;
-      const y = ((90 - latitude) / 180) * height;
-      if (index === 0) context.moveTo(x, y);
-      else context.lineTo(x, y);
-    });
-    context.closePath();
-  };
-
-  if (geometry.type === "Polygon") {
-    geometry.coordinates.forEach(drawRing);
-  } else if (geometry.type === "MultiPolygon") {
-    geometry.coordinates.forEach((polygon) => polygon.forEach(drawRing));
-  }
-}
-
-function createEarthTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 2048;
-  canvas.height = 1024;
-  const context = canvas.getContext("2d");
-  if (!context) {
-    throw new Error("Unable to create the globe texture canvas.");
-  }
-
-  const ocean = context.createLinearGradient(0, 0, 0, canvas.height);
-  ocean.addColorStop(0, "#0b3b70");
-  ocean.addColorStop(0.48, "#082b59");
-  ocean.addColorStop(1, "#061f40");
-  context.fillStyle = ocean;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  context.strokeStyle = "rgba(97, 196, 229, 0.12)";
-  context.lineWidth = 1.3;
-  for (let longitude = 0; longitude <= 360; longitude += 15) {
-    const x = (longitude / 360) * canvas.width;
-    context.beginPath();
-    context.moveTo(x, 0);
-    context.lineTo(x, canvas.height);
-    context.stroke();
-  }
-  for (let latitude = 0; latitude <= 180; latitude += 15) {
-    const y = (latitude / 180) * canvas.height;
-    context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(canvas.width, y);
-    context.stroke();
-  }
-
-  const topology = worldAtlas as unknown as WorldTopology;
-  const countries = feature(topology, topology.objects.countries);
-  context.beginPath();
-  countries.features.forEach((country) => {
-    if (country.geometry) {
-      drawGeometry(context, country.geometry, canvas.width, canvas.height);
-    }
+function GlobeControls({
+  interactionRef, onInteraction, reducedMotion, visible,
+}: Pick<GlobeProps, "interactionRef" | "onInteraction" | "reducedMotion" | "visible">) {
+  const { camera, invalidate } = useThree();
+  const motion = useRef({
+    theta: GLOBE_CAMERA.defaultTheta,
+    phi: GLOBE_CAMERA.defaultPhi,
+    distance: GLOBE_CAMERA.defaultDistance,
+    targetTheta: GLOBE_CAMERA.defaultTheta,
+    targetPhi: GLOBE_CAMERA.defaultPhi,
+    targetDistance: GLOBE_CAMERA.defaultDistance,
+    lastInteraction: -Infinity,
+    autoSpeed: 0,
+    pointerX: 0,
+    pointerY: 0,
+    parallaxX: 0,
+    parallaxY: 0,
   });
+  const pointers = useRef(new Map<number, Vector2>());
+  const spherical = useMemo(() => new Spherical(), []);
 
-  const continents = context.createLinearGradient(0, 140, 0, canvas.height - 100);
-  continents.addColorStop(0, "#39adbd");
-  continents.addColorStop(0.54, "#1b8d9f");
-  continents.addColorStop(1, "#147083");
-  context.fillStyle = continents;
-  context.shadowColor = "rgba(32, 183, 213, 0.42)";
-  context.shadowBlur = 16;
-  context.fill();
-  context.shadowBlur = 0;
-  context.strokeStyle = "rgba(164, 244, 234, 0.48)";
-  context.lineWidth = 1.15;
-  context.stroke();
-
-  const texture = new CanvasTexture(canvas);
-  texture.colorSpace = SRGBColorSpace;
-  return texture;
-}
-
-function RouteArc({
-  route,
-  index,
-  reducedMotion,
-}: {
-  route: Route;
-  index: number;
-  reducedMotion: boolean;
-}) {
-  const curve = useMemo(() => {
-    const start = coordinateToVector(route.from, 1.013);
-    const end = coordinateToVector(route.to, 1.013);
-    const control = start.clone().add(end).multiplyScalar(0.5);
-    control.normalize().multiplyScalar(1.13 + (index % 3) * 0.035);
-    return new QuadraticBezierCurve3(start, control, end);
-  }, [index, route]);
-  const geometry = useMemo(
-    () => new TubeGeometry(curve, 56, 0.0024, 5, false),
-    [curve],
-  );
-  const routeRef = useRef<Mesh>(null);
-  const particleRef = useRef<Mesh>(null);
-  const elapsedRef = useRef(0);
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => {
+    const element = interactionRef.current;
+    if (!element) return;
+    const state = motion.current;
+    const activePointers = pointers.current;
+    let span = 0;
+    const interact = () => {
+      state.lastInteraction = performance.now() / 1000;
+      state.autoSpeed = 0;
+      onInteraction();
+      invalidate();
+    };
+    const getSpan = () => {
+      const points = [...activePointers.values()];
+      return points.length === 2 ? points[0].distanceTo(points[1]) : 0;
+    };
+    const down = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      element.setPointerCapture(event.pointerId);
+      activePointers.set(event.pointerId, new Vector2(event.clientX, event.clientY));
+      span = getSpan();
+      element.dataset.dragging = "true";
+      interact();
+    };
+    const move = (event: PointerEvent) => {
+      const previous = activePointers.get(event.pointerId);
+      if (!previous) {
+        if (event.pointerType === "mouse") {
+          const bounds = element.getBoundingClientRect();
+          state.pointerX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 0.018;
+          state.pointerY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 0.012;
+          invalidate();
+        }
+        return;
+      }
+      const dx = event.clientX - previous.x;
+      const dy = event.clientY - previous.y;
+      previous.set(event.clientX, event.clientY);
+      if (activePointers.size === 1) {
+        const scale = 3.5 / Math.max(240, element.clientWidth);
+        state.targetTheta -= dx * scale;
+        state.targetPhi = Math.max(0.25, Math.min(Math.PI - 0.25, state.targetPhi - dy * scale));
+      } else if (activePointers.size === 2) {
+        const nextSpan = getSpan();
+        state.targetDistance = pinchDistance(state.targetDistance, span, nextSpan);
+        span = nextSpan;
+      }
+      interact();
+    };
+    const up = (event: PointerEvent) => {
+      if (!activePointers.delete(event.pointerId)) return;
+      if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
+      span = getSpan();
+      element.dataset.dragging = activePointers.size ? "true" : "false";
+      interact();
+    };
+    const leave = () => {
+      state.pointerX = 0;
+      state.pointerY = 0;
+      invalidate();
+    };
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientHeight : 1);
+      state.targetDistance = zoomDistance(state.targetDistance, delta);
+      interact();
+    };
+    const reset = () => {
+      state.targetTheta = state.theta + Math.atan2(
+        Math.sin(GLOBE_CAMERA.defaultTheta - state.theta),
+        Math.cos(GLOBE_CAMERA.defaultTheta - state.theta),
+      );
+      state.targetPhi = GLOBE_CAMERA.defaultPhi;
+      state.targetDistance = GLOBE_CAMERA.defaultDistance;
+    };
+    const keydown = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case "ArrowLeft": state.targetTheta -= 0.12; break;
+        case "ArrowRight": state.targetTheta += 0.12; break;
+        case "ArrowUp": state.targetPhi = Math.max(0.25, state.targetPhi - 0.12); break;
+        case "ArrowDown": state.targetPhi = Math.min(Math.PI - 0.25, state.targetPhi + 0.12); break;
+        case "+": case "=": state.targetDistance = zoomDistance(state.targetDistance, -120); break;
+        case "-": state.targetDistance = zoomDistance(state.targetDistance, 120); break;
+        case "Home": reset(); break;
+        default: return;
+      }
+      event.preventDefault();
+      interact();
+    };
+    const doubleClick = () => {
+      if (state.targetDistance < 2.8) reset();
+      else state.targetDistance = 2.6;
+      interact();
+    };
+    element.addEventListener("pointerdown", down);
+    element.addEventListener("pointermove", move);
+    element.addEventListener("pointerup", up);
+    element.addEventListener("pointercancel", up);
+    element.addEventListener("lostpointercapture", up);
+    element.addEventListener("pointerleave", leave);
+    element.addEventListener("wheel", wheel, { passive: false });
+    element.addEventListener("keydown", keydown);
+    element.addEventListener("dblclick", doubleClick);
+    return () => {
+      element.removeEventListener("pointerdown", down);
+      element.removeEventListener("pointermove", move);
+      element.removeEventListener("pointerup", up);
+      element.removeEventListener("pointercancel", up);
+      element.removeEventListener("lostpointercapture", up);
+      element.removeEventListener("pointerleave", leave);
+      element.removeEventListener("wheel", wheel);
+      element.removeEventListener("keydown", keydown);
+      element.removeEventListener("dblclick", doubleClick);
+      activePointers.clear();
+      element.dataset.dragging = "false";
+    };
+  }, [interactionRef, invalidate, onInteraction]);
 
   useFrame((_, delta) => {
-    if (reducedMotion) {
-      if (particleRef.current) particleRef.current.visible = false;
-      return;
-    }
-
-    elapsedRef.current += delta;
-    const active = (elapsedRef.current / 24 + route.phase) % 1 < 0.64;
-    if (routeRef.current) routeRef.current.visible = active;
-
-    const progress = (elapsedRef.current * 0.075 + route.phase) % 1;
-    const particleActive = active && progress < 0.2;
-    if (particleRef.current) {
-      particleRef.current.visible = particleActive;
-      if (particleActive) {
-        particleRef.current.position.copy(curve.getPoint(progress / 0.2));
-      }
-    }
+    if (!visible) return;
+    const state = motion.current;
+    state.autoSpeed = idleRotationSpeed(
+      state.autoSpeed, performance.now() / 1000 - state.lastInteraction,
+      pointers.current.size > 0, reducedMotion, delta,
+    );
+    state.targetTheta += state.autoSpeed * Math.min(delta, 0.05);
+    state.theta = dampValue(state.theta, state.targetTheta, delta);
+    state.phi = dampValue(state.phi, state.targetPhi, delta);
+    state.distance = dampValue(state.distance, state.targetDistance, delta);
+    state.parallaxX = dampValue(state.parallaxX, reducedMotion ? 0 : state.pointerX, delta, 3);
+    state.parallaxY = dampValue(state.parallaxY, reducedMotion ? 0 : state.pointerY, delta, 3);
+    spherical.set(state.distance, state.phi + state.parallaxY, state.theta + state.parallaxX);
+    camera.position.setFromSpherical(spherical);
+    camera.lookAt(0, 0, 0);
+    const settling = Math.abs(state.distance - state.targetDistance)
+      + Math.abs(state.theta - state.targetTheta) + Math.abs(state.phi - state.targetPhi)
+      + Math.abs(state.parallaxX - (reducedMotion ? 0 : state.pointerX))
+      + Math.abs(state.parallaxY - (reducedMotion ? 0 : state.pointerY));
+    if (reducedMotion && settling > 0.00001) invalidate();
   });
+  return null;
+}
 
+function RouteArc({ destination, index, reducedMotion }: {
+  destination: Coordinate; index: number; reducedMotion: boolean;
+}) {
+  const particleRef = useRef<Mesh>(null);
+  const progress = useRef(index / destinations.length);
+  const curve = useMemo(() => {
+    const start = coordinateToVector(india, 1);
+    const end = coordinateToVector(destination, 1);
+    const points = Array.from({ length: 49 }, (_, i) => {
+      const t = i / 48;
+      return start.clone().lerp(end, t).normalize().multiplyScalar(1.012 + Math.sin(Math.PI * t) * 0.16);
+    });
+    return new CatmullRomCurve3(points);
+  }, [destination]);
+  useFrame((_, delta) => {
+    if (reducedMotion || !particleRef.current) return;
+    progress.current = (progress.current + Math.min(delta, 0.05) * 0.025) % 1;
+    curve.getPoint(progress.current, particleRef.current.position);
+  });
   return (
     <group>
-      <mesh ref={routeRef} geometry={geometry}>
-        <meshBasicMaterial color={route.color} transparent opacity={0.66} />
+      <mesh>
+        <tubeGeometry args={[curve, 64, 0.0016, 5, false]} />
+        <meshBasicMaterial color="#8bbecb" transparent opacity={0.38} />
       </mesh>
-      <mesh ref={particleRef} visible={false}>
-        <sphereGeometry args={[0.014, 12, 12]} />
-        <meshBasicMaterial color={route.color} toneMapped={false} />
+      <mesh position={coordinateToVector(destination, 1.016)}>
+        <sphereGeometry args={[0.006, 10, 10]} />
+        <meshBasicMaterial color="#a6d9d4" />
       </mesh>
+      {!reducedMotion && (
+        <mesh ref={particleRef} position={curve.getPoint(index / destinations.length)}>
+          <sphereGeometry args={[0.006, 10, 10]} />
+          <meshBasicMaterial color="#c7e9e6" />
+        </mesh>
+      )}
     </group>
   );
 }
 
-function HubLabel({ label }: { label: string }) {
-  const spriteRef = useRef<Sprite>(null);
-  const worldPosition = useMemo(() => new Vector3(), []);
-  const cameraDirection = useMemo(() => new Vector3(), []);
-  const texture = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 384;
-    canvas.height = 96;
-    const context = canvas.getContext("2d");
-    if (!context) {
-      throw new Error("Unable to create the globe label canvas.");
-    }
-
-    context.fillStyle = "rgba(8, 43, 89, 0.85)";
-    context.strokeStyle = "rgba(255, 255, 255, 0.25)";
-    context.lineWidth = 3;
-    context.beginPath();
-    context.roundRect(2, 2, canvas.width - 4, canvas.height - 4, 46);
-    context.fill();
-    context.stroke();
-    context.font = "600 42px sans-serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillStyle = "#e4edf7";
-    context.fillText(label, canvas.width / 2, canvas.height / 2);
-
-    const labelTexture = new CanvasTexture(canvas);
-    labelTexture.colorSpace = SRGBColorSpace;
-    return labelTexture;
-  }, [label]);
-
-  useEffect(() => () => texture.dispose(), [texture]);
-
-  useFrame(({ camera }) => {
-    if (!spriteRef.current) return;
-    spriteRef.current.getWorldPosition(worldPosition);
-    camera.getWorldPosition(cameraDirection).sub(worldPosition);
-    spriteRef.current.visible = cameraDirection.dot(worldPosition) > 0;
+function Earth({ mobile, reducedMotion, onReady }: Pick<GlobeProps, "mobile" | "reducedMotion" | "onReady">) {
+  const [day, clouds, normal, roughness] = useLoader(TextureLoader, [
+    `/images/earth/${mobile ? "day-mobile" : "day"}.webp`,
+    "/images/earth/clouds.webp", "/images/earth/normal.webp", "/images/earth/roughness.webp",
+  ]);
+  const cloudRef = useRef<Mesh>(null);
+  const lightingRef = useRef<Group>(null);
+  useEffect(() => onReady(), [onReady]);
+  useFrame(({ camera }, delta) => {
+    if (lightingRef.current) lightingRef.current.quaternion.copy(camera.quaternion);
+    if (cloudRef.current && !reducedMotion) cloudRef.current.rotation.y += Math.min(delta, 0.05) * 0.004;
   });
-
   return (
-    <sprite ref={spriteRef} scale={[0.32, 0.08, 1]} center={[0.5, 1.4]}>
-      <spriteMaterial map={texture} transparent depthWrite={false} toneMapped={false} />
-    </sprite>
-  );
-}
-
-function HubNode({
-  coordinate,
-  label,
-  primary = false,
-}: {
-  coordinate: Coordinate;
-  label: string;
-  primary?: boolean;
-}) {
-  const pulseRef = useRef<Mesh>(null);
-  const haloRef = useRef<Mesh>(null);
-  const elapsedRef = useRef(0);
-  const position = useMemo(() => coordinateToVector(coordinate, 1.025), [coordinate]);
-
-  useFrame((_, delta) => {
-    if (!pulseRef.current || !haloRef.current) return;
-    elapsedRef.current += delta;
-    const pulse =
-      1 + Math.sin(elapsedRef.current * (primary ? 2.4 : 1.7)) * 0.16;
-    pulseRef.current.scale.setScalar(pulse);
-    haloRef.current.scale.setScalar(pulse * (primary ? 2.3 : 1.8));
-  });
-
-  return (
-    <group position={position}>
-      <HubLabel label={label} />
-      <mesh ref={haloRef}>
-        <sphereGeometry args={[primary ? 0.035 : 0.023, 12, 12]} />
-        <meshBasicMaterial
-          color={primary ? "#35be84" : "#20b7d5"}
-          transparent
-          opacity={0.2}
-          toneMapped={false}
-        />
-      </mesh>
-      <mesh ref={pulseRef}>
-        <sphereGeometry args={[primary ? 0.017 : 0.011, 12, 12]} />
-        <meshBasicMaterial
-          color={primary ? "#8affc7" : "#86f3ef"}
-          toneMapped={false}
-        />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[primary ? 0.008 : 0.006, 8, 8]} />
-        <meshBasicMaterial color={primary ? "#35be84" : "#20b7d5"} />
-      </mesh>
-    </group>
-  );
-}
-
-const hubs: { label: string; coordinate: Coordinate; primary?: boolean }[] = [
-  { label: "India", coordinate: [78, 22], primary: true },
-  { label: "Dubai", coordinate: [55, 25] },
-  { label: "Singapore", coordinate: [104, 1] },
-  { label: "London", coordinate: [-2, 54] },
-  { label: "Germany", coordinate: [10, 51] },
-  { label: "New York", coordinate: [-74, 41] },
-  { label: "Malaysia", coordinate: [102, 4] },
-  { label: "Australia", coordinate: [134, -25] },
-];
-
-function Earth({
-  reducedMotion,
-  mobile,
-}: {
-  reducedMotion: boolean;
-  mobile: boolean;
-}) {
-  const groupRef = useRef<Group>(null);
-  const texture = useMemo(() => createEarthTexture(), []);
-  useEffect(() => () => texture.dispose(), [texture]);
-
-  useFrame((_, delta) => {
-    if (groupRef.current && !reducedMotion) {
-      groupRef.current.rotation.y += delta * 0.03;
-    }
-  });
-
-  return (
-    <group ref={groupRef} rotation={[0, 0.12, 0]}>
-      <mesh>
-        <sphereGeometry args={[1, 96, 96]} />
-        <meshStandardMaterial
-          map={texture}
-          roughness={0.72}
-          metalness={0.16}
-        />
-      </mesh>
-      <mesh scale={1.009}>
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshBasicMaterial
-          color="#7ce7ec"
-          wireframe
-          transparent
-          opacity={0.035}
-          depthWrite={false}
-        />
-      </mesh>
-      <group>
-        {routes.slice(0, mobile ? 5 : routes.length).map((route, index) => (
-          <RouteArc
-            key={`${route.to[0]}-${route.to[1]}`}
-            route={route}
-            index={index}
-            reducedMotion={reducedMotion}
-          />
-        ))}
-        {hubs.map((hub) => (
-          <HubNode key={hub.label} {...hub} />
-        ))}
+    <>
+      <group ref={lightingRef}>
+        <directionalLight position={[3, 4, 5]} color="#f0f5ff" intensity={2.5} />
+        <directionalLight position={[-4, -1, 2]} color="#92abc5" intensity={0.35} />
       </group>
-    </group>
+      <ambientLight intensity={0.32} />
+      <mesh>
+        <sphereGeometry args={[1, mobile ? 64 : 96, mobile ? 48 : 64]} />
+        <meshStandardMaterial map={day} map-colorSpace={SRGBColorSpace} normalMap={normal} normalScale={new Vector2(0.45, 0.45)}
+          roughnessMap={roughness} roughness={1} metalness={0.08} />
+      </mesh>
+      <mesh ref={cloudRef} scale={1.007}>
+        <sphereGeometry args={[1, 64, 48]} />
+        <meshStandardMaterial color="#edf3f7" alphaMap={clouds} transparent opacity={0.24}
+          depthWrite={false} roughness={1} />
+      </mesh>
+      <mesh scale={1.035}>
+        <sphereGeometry args={[1, 64, 48]} />
+        <shaderMaterial transparent depthWrite={false} side={BackSide} blending={AdditiveBlending}
+          vertexShader={`
+            varying vec3 vNormal;
+            varying vec3 vView;
+            void main() {
+              vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+              vNormal = normalize(normalMatrix * normal);
+              vView = -viewPosition.xyz;
+              gl_Position = projectionMatrix * viewPosition;
+            }
+          `}
+          fragmentShader={`
+            varying vec3 vNormal;
+            varying vec3 vView;
+            void main() {
+              float rim = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 3.0);
+              gl_FragColor = vec4(0.3, 0.56, 0.8, rim * 0.28);
+            }
+          `}
+        />
+      </mesh>
+      {destinations.slice(0, mobile ? 4 : destinations.length).map((destination, index) => (
+        <RouteArc key={destination.join(",")} destination={destination} index={index} reducedMotion={reducedMotion} />
+      ))}
+      <group position={coordinateToVector(india, 1.017)}>
+        <mesh>
+          <sphereGeometry args={[0.011, 16, 16]} />
+          <meshBasicMaterial color="#a3d8ba" />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[0.022, 16, 16]} />
+          <meshBasicMaterial color="#65b99f" transparent opacity={0.15} depthWrite={false} />
+        </mesh>
+      </group>
+    </>
   );
 }
 
-export default function InteractiveGlobe({
-  reducedMotion,
-  visible = true,
-  mobile = false,
-}: {
-  reducedMotion: boolean;
-  visible?: boolean;
-  mobile?: boolean;
-}) {
+function ContextMonitor({ onUnavailable }: Pick<GlobeProps, "onUnavailable">) {
+  const { gl } = useThree();
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const contextLost = (event: Event) => {
+      event.preventDefault();
+      console.error("Earth WebGL context lost; displaying the static fallback.");
+      onUnavailable();
+    };
+    canvas.addEventListener("webglcontextlost", contextLost);
+    return () => canvas.removeEventListener("webglcontextlost", contextLost);
+  }, [gl, onUnavailable]);
+  return null;
+}
+
+export default function InteractiveGlobe(props: GlobeProps) {
   return (
     <Canvas
-      aria-label="Interactive three-dimensional globe showing international business connections"
-      dpr={mobile ? 1 : 1.35}
-      camera={{ position: [0, 0, 3.9], fov: 42 }}
+      aria-label="Three-dimensional Earth with international business connections"
+      className="pointer-events-none"
+      dpr={[1, props.mobile ? 1.25 : 2]}
+      camera={{ position: coordinateToVector([68, 20], GLOBE_CAMERA.defaultDistance).toArray(), fov: 42 }}
       gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
-      frameloop={visible ? "always" : "never"}
-      fallback={<div className="globe-fallback absolute inset-0 rounded-full" />}
+      frameloop={!props.visible ? "never" : props.reducedMotion ? "demand" : "always"}
+      fallback={<EarthFallback />}
     >
-      <ambientLight intensity={0.85} />
-      <directionalLight position={[3, 2, 4]} intensity={2.15} color="#d9fbff" />
-      <pointLight position={[-3, -1, 2]} intensity={1.2} color="#148ce0" />
-      <Starfield count={mobile ? 120 : 260} />
-      <Atmosphere />
-      <OrbitRing tilt={[1.2, 0.3, 0]} radius={1.38} speed={0.45} color="#35be84" reducedMotion={reducedMotion} />
-      {!mobile && (
-        <OrbitRing tilt={[0.5, -0.6, 0.4]} radius={1.55} speed={-0.3} color="#20b7d5" reducedMotion={reducedMotion} />
-      )}
-      <Earth reducedMotion={reducedMotion} mobile={mobile} />
-      <OrbitControls
-        enablePan={false}
-        enableZoom={false}
-        enableRotate={!mobile}
-        enableDamping
-        dampingFactor={0.08}
-        rotateSpeed={0.35}
-        autoRotate={!reducedMotion}
-        autoRotateSpeed={0.22}
-      />
+      <ContextMonitor onUnavailable={props.onUnavailable} />
+      <GlobeControls {...props} />
+      <Suspense fallback={null}>
+        <Earth mobile={props.mobile} reducedMotion={props.reducedMotion} onReady={props.onReady} />
+      </Suspense>
     </Canvas>
   );
 }

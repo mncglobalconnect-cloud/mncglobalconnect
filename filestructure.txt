@@ -12,6 +12,14 @@
     |-- file.svg
     |-- globe.svg
     |-- images
+        |-- earth
+            |-- ATTRIBUTION.txt
+            |-- clouds.webp
+            |-- day-mobile.webp
+            |-- day.webp
+            |-- earth-fallback.webp
+            |-- normal.webp
+            |-- roughness.webp
         |-- events
             |-- buyer-seller.jpg
             |-- delegation.jpg
@@ -88,6 +96,7 @@
             |-- page.tsx
     |-- components
         |-- globe
+            |-- earth-fallback.tsx
             |-- globe-loader.tsx
             |-- interactive-globe.tsx
         |-- home
@@ -129,6 +138,7 @@
     |-- lib
         |-- constants.ts
         |-- filters.ts
+        |-- globe-motion.ts
         |-- google-address.ts
         |-- membership-application.ts
         |-- utils.ts
@@ -140,6 +150,7 @@
         |-- membership.ts
         |-- opportunity.ts
 |-- tests
+    |-- globe-motion.test.mjs
     |-- google-address.test.mjs
     |-- membership-verification.test.mjs
 |-- tsconfig.json

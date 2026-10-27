@@ -1,0 +1,11 @@
+Earth textures: Solar System Scope, https://www.solarsystemscope.com/textures/
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Originals: 2k_earth_daymap.jpg, 2k_earth_clouds.jpg,
+2k_earth_normal_map.tif, 2k_earth_specular_map.tif.
+Based on NASA imagery and elevation data, as described by Solar System Scope.
+
+Modifications for MNC Global Connect: resized and converted to WebP;
+specular map inverted/rescaled for roughness; static fallback generated
+by orthographic projection and lighting of the day texture.
