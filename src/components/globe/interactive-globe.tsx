@@ -3,12 +3,15 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
+  AdditiveBlending,
+  BufferAttribute,
   BackSide,
   CanvasTexture,
   Group,
   Mesh,
   QuadraticBezierCurve3,
   SRGBColorSpace,
+  Sprite,
   TubeGeometry,
   Vector3,
 } from "three";
@@ -20,6 +23,104 @@ import type {
 } from "topojson-specification";
 import worldAtlas from "world-atlas/countries-110m.json";
 import { useEffect, useMemo, useRef } from "react";
+
+const atmosphereVertex = `
+  varying vec3 vNormal;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const atmosphereFragment = `
+  varying vec3 vNormal;
+  void main() {
+    float intensity = pow(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.6);
+    gl_FragColor = vec4(0.13, 0.72, 0.9, 1.0) * intensity * 1.6;
+  }
+`;
+
+function Atmosphere() {
+  return (
+    <mesh scale={1.2}>
+      <sphereGeometry args={[1, 64, 64]} />
+      <shaderMaterial
+        vertexShader={atmosphereVertex}
+        fragmentShader={atmosphereFragment}
+        side={BackSide}
+        blending={AdditiveBlending}
+        transparent
+        depthWrite={false}
+      />
+    </mesh>
+  );
+}
+
+function Starfield({ count }: { count: number }) {
+  const positions = useMemo(() => {
+    const array = new Float32Array(count * 3);
+    let seed = 1337;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < count; i++) {
+      const radius = 4 + random() * 3;
+      const theta = random() * Math.PI * 2;
+      const phi = Math.acos(2 * random() - 1);
+      array[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      array[i * 3 + 1] = radius * Math.cos(phi);
+      array[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+    }
+    return new BufferAttribute(array, 3);
+  }, [count]);
+  return (
+    <points>
+      <bufferGeometry>
+        <primitive object={positions} attach="attributes-position" />
+      </bufferGeometry>
+      <pointsMaterial color="#bfefff" size={0.022} transparent opacity={0.7} sizeAttenuation depthWrite={false} />
+    </points>
+  );
+}
+
+function OrbitRing({
+  tilt,
+  radius,
+  speed,
+  color,
+  reducedMotion,
+}: {
+  tilt: [number, number, number];
+  radius: number;
+  speed: number;
+  color: string;
+  reducedMotion: boolean;
+}) {
+  const satelliteRef = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (!satelliteRef.current || reducedMotion) return;
+    const angle = clock.elapsedTime * speed;
+    satelliteRef.current.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+  });
+  return (
+    <group rotation={tilt}>
+      <mesh>
+        <torusGeometry args={[radius, 0.0025, 8, 160]} />
+        <meshBasicMaterial color={color} transparent opacity={0.28} />
+      </mesh>
+      <group ref={satelliteRef} position={[radius, 0, 0]}>
+        <mesh>
+          <sphereGeometry args={[0.028, 16, 16]} />
+          <meshBasicMaterial color={color} toneMapped={false} />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[0.06, 16, 16]} />
+          <meshBasicMaterial color={color} transparent opacity={0.18} toneMapped={false} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
 
 type Coordinate = readonly [longitude: number, latitude: number];
 type Route = {
@@ -196,11 +297,60 @@ function RouteArc({
   );
 }
 
+function HubLabel({ label }: { label: string }) {
+  const spriteRef = useRef<Sprite>(null);
+  const worldPosition = useMemo(() => new Vector3(), []);
+  const cameraDirection = useMemo(() => new Vector3(), []);
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 384;
+    canvas.height = 96;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Unable to create the globe label canvas.");
+    }
+
+    context.fillStyle = "rgba(8, 43, 89, 0.85)";
+    context.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.roundRect(2, 2, canvas.width - 4, canvas.height - 4, 46);
+    context.fill();
+    context.stroke();
+    context.font = "600 42px sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillStyle = "#e4edf7";
+    context.fillText(label, canvas.width / 2, canvas.height / 2);
+
+    const labelTexture = new CanvasTexture(canvas);
+    labelTexture.colorSpace = SRGBColorSpace;
+    return labelTexture;
+  }, [label]);
+
+  useEffect(() => () => texture.dispose(), [texture]);
+
+  useFrame(({ camera }) => {
+    if (!spriteRef.current) return;
+    spriteRef.current.getWorldPosition(worldPosition);
+    camera.getWorldPosition(cameraDirection).sub(worldPosition);
+    spriteRef.current.visible = cameraDirection.dot(worldPosition) > 0;
+  });
+
+  return (
+    <sprite ref={spriteRef} scale={[0.32, 0.08, 1]} center={[0.5, 1.4]}>
+      <spriteMaterial map={texture} transparent depthWrite={false} toneMapped={false} />
+    </sprite>
+  );
+}
+
 function HubNode({
   coordinate,
+  label,
   primary = false,
 }: {
   coordinate: Coordinate;
+  label: string;
   primary?: boolean;
 }) {
   const pulseRef = useRef<Mesh>(null);
@@ -219,6 +369,7 @@ function HubNode({
 
   return (
     <group position={position}>
+      <HubLabel label={label} />
       <mesh ref={haloRef}>
         <sphereGeometry args={[primary ? 0.035 : 0.023, 12, 12]} />
         <meshBasicMaterial
@@ -267,7 +418,7 @@ function Earth({
 
   useFrame((_, delta) => {
     if (groupRef.current && !reducedMotion) {
-      groupRef.current.rotation.y += delta * 0.018;
+      groupRef.current.rotation.y += delta * 0.03;
     }
   });
 
@@ -288,16 +439,6 @@ function Earth({
           wireframe
           transparent
           opacity={0.035}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh scale={1.055}>
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshBasicMaterial
-          color="#148ce0"
-          side={BackSide}
-          transparent
-          opacity={0.16}
           depthWrite={false}
         />
       </mesh>
@@ -331,7 +472,7 @@ export default function InteractiveGlobe({
     <Canvas
       aria-label="Interactive three-dimensional globe showing international business connections"
       dpr={mobile ? 1 : 1.35}
-      camera={{ position: [0, 0, 3.1], fov: 42 }}
+      camera={{ position: [0, 0, 3.9], fov: 42 }}
       gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
       frameloop={visible ? "always" : "never"}
       fallback={<div className="globe-fallback absolute inset-0 rounded-full" />}
@@ -339,6 +480,12 @@ export default function InteractiveGlobe({
       <ambientLight intensity={0.85} />
       <directionalLight position={[3, 2, 4]} intensity={2.15} color="#d9fbff" />
       <pointLight position={[-3, -1, 2]} intensity={1.2} color="#148ce0" />
+      <Starfield count={mobile ? 120 : 260} />
+      <Atmosphere />
+      <OrbitRing tilt={[1.2, 0.3, 0]} radius={1.38} speed={0.45} color="#35be84" reducedMotion={reducedMotion} />
+      {!mobile && (
+        <OrbitRing tilt={[0.5, -0.6, 0.4]} radius={1.55} speed={-0.3} color="#20b7d5" reducedMotion={reducedMotion} />
+      )}
       <Earth reducedMotion={reducedMotion} mobile={mobile} />
       <OrbitControls
         enablePan={false}

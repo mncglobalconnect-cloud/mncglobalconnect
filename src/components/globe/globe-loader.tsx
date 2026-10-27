@@ -76,7 +76,7 @@ export function GlobeLoader() {
       className="relative mx-auto aspect-square w-full max-w-[560px]"
     >
       <div className="globe-ambient pointer-events-none absolute inset-[8%] rounded-full" />
-      <div className="absolute inset-[5%] overflow-hidden rounded-full">
+      <div className="absolute inset-0">
         <InteractiveGlobe reducedMotion={reducedMotion} visible={visible} mobile={mobile} />
       </div>
       {floatingSignals.map((signal) => (
