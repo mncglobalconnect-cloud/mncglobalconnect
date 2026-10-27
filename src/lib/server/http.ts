@@ -6,12 +6,17 @@ export function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 }
 
-/** Rejects cross-site form posts: the browser's Origin must match this site. */
+/**
+ * Rejects cross-site form posts: the browser's Origin must match the host it requested. Behind a reverse
+ * proxy, request.url carries the app's internal address (e.g. localhost:3001), so compare against the Host
+ * header the proxy forwards (nginx sets it to the public domain).
+ */
 export function isSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return true; // Same-origin fetches from older browsers and server-side tools omit it.
   try {
-    return new URL(origin).host === new URL(request.url).host;
+    const host = request.headers.get("x-forwarded-host")?.split(",")[0].trim() || request.headers.get("host") || new URL(request.url).host;
+    return new URL(origin).host.toLowerCase() === host.toLowerCase();
   } catch {
     return false;
   }
