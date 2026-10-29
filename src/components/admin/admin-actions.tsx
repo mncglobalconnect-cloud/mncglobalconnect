@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, KeyRound, Link2, UserCheck, UserX, X } from "lucide-react";
+import { Check, Copy, KeyRound, Link2, LockOpen, UserCheck, UserX, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/form-controls";
@@ -81,13 +81,13 @@ export function ReviewActions({ reference }: { reference: string }) {
   );
 }
 
-export function MemberActions({ id, status, isSelf }: { id: string; status: string; isSelf: boolean }) {
+export function MemberActions({ id, status, isSelf, locked = false }: { id: string; status: string; isSelf: boolean; locked?: boolean }) {
   const router = useRouter();
   const [pending, setPending] = useState("");
   const [error, setError] = useState("");
   const [link, setLink] = useState<LinkResult | null>(null);
 
-  const act = async (action: "disable" | "enable" | "password-link") => {
+  const act = async (action: "disable" | "enable" | "unlock" | "password-link") => {
     if (action === "disable" && !window.confirm("Disable this account? The member is signed out immediately.")) return;
     setPending(action);
     setError("");
@@ -105,6 +105,12 @@ export function MemberActions({ id, status, isSelf }: { id: string; status: stri
   return (
     <div>
       <div className="flex flex-wrap justify-end gap-1.5">
+        {locked && status !== "disabled" && (
+          <button type="button" disabled={!!pending} onClick={() => act("unlock")} title="Clear the lockout from failed sign-ins"
+            className={`${button} min-h-8 border border-amber-200 px-3 text-[12.5px] text-amber-700 hover:bg-amber-50`}>
+            {pending === "unlock" ? <Spinner className="size-3.5" /> : <LockOpen aria-hidden="true" className="size-3.5" />} Unlock
+          </button>
+        )}
         {status !== "disabled" && (
           <button type="button" disabled={!!pending} onClick={() => act("password-link")} title="Create a one-time set-up or reset link"
             className={`${button} min-h-8 border border-slate-200 px-3 text-[12.5px] text-[#082b59] hover:bg-slate-50`}>

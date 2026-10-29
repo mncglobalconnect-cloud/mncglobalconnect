@@ -4,6 +4,7 @@
 //   npm run admin -- reject MNC-1A2B3C
 //   npm run admin -- password-link member@company.com
 //   npm run admin -- create-admin you@company.com "Your Name"
+//   npm run admin -- unlock you@company.com          (clear a lockout from failed sign-ins)
 //   ADMIN_PASSWORD=... npm run admin -- create-admin you@company.com "Your Name"   (sets the password directly)
 import { createHash, randomBytes, scrypt } from "node:crypto";
 import { promisify } from "node:util";
@@ -115,13 +116,19 @@ try {
       console.log(`Open this one-time link to set the password, then sign in at ${appUrl.replace(/\/$/, "")}/login:
 ${link}`);
     }
+  } else if (command === "unlock") {
+    // Clears a lockout from failed sign-ins (works for admins who can't sign in themselves).
+    const email = String(argument ?? "").trim().toLowerCase();
+    const result = await users.updateOne({ email }, { $set: { failedLogins: 0, updatedAt: new Date() }, $unset: { lockedUntil: "" } });
+    if (!result.matchedCount) throw new Error(`No account for ${argument}.`);
+    console.log(`${email} unlocked. They can sign in again now.`);
   } else if (command === "password-link") {
     const user = await users.findOne({ email: String(argument ?? "").toLowerCase() });
     if (!user) throw new Error(`No member account for ${argument}.`);
     const purpose = user.passwordHash ? "reset" : "setup";
     console.log(`One-time ${purpose} link for ${user.email}:\n${await passwordLink(db, user._id, purpose)}`);
   } else {
-    console.log("Usage: npm run admin -- list | approve <reference> | reject <reference> | password-link <email> | create-admin <email> <name>");
+    console.log("Usage: npm run admin -- list | approve <reference> | reject <reference> | password-link <email> | unlock <email> | create-admin <email> <name>");
     process.exitCode = 1;
   }
 } catch (error) {

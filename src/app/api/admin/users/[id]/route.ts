@@ -22,6 +22,11 @@ export async function POST(request: Request, ctx: RouteContext<"/api/admin/users
       await sessions.deleteMany({ userId: id });
       return json({ ok: true });
     }
+    if (action === "unlock") {
+      // Clears a temporary lockout from failed sign-ins without changing the password.
+      await users.updateOne({ _id: id }, { $set: { failedLogins: 0, updatedAt: now }, $unset: { lockedUntil: "" } });
+      return json({ ok: true });
+    }
     if (action === "enable") {
       await users.updateOne({ _id: id }, { $set: { status: user.passwordHash ? "active" : "invited", updatedAt: now }, $unset: { lockedUntil: "" } });
       return json({ ok: true });

@@ -88,7 +88,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/admin-da
                         <div className="flex flex-wrap gap-1"><StatusBadge status={user.status} />{user.role === "admin" && <StatusBadge status="admin" />}</div>
                       </td>
                       <td className="px-5 py-3.5">
-                        <MemberActions id={user._id.toString()} status={user.status} isSelf={admin?._id.equals(user._id) ?? false} />
+                        <MemberActions id={user._id.toString()} status={user.status} isSelf={admin?._id.equals(user._id) ?? false} locked={Boolean(locked)} />
                       </td>
                     </tr>
                   );
