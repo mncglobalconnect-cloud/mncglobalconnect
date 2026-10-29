@@ -48,6 +48,7 @@ async function ensureIndexes(db: Db) {
     db.collection("applications").createIndex({ status: 1, createdAt: -1 }),
     db.collection("contactEnquiries").createIndex({ createdAt: -1 }),
     db.collection("newsletterSubscribers").createIndex({ email: 1 }, { unique: true }),
+    db.collection("listings").createIndex({ kind: 1, published: 1, date: 1 }),
   ]);
 }
 
@@ -72,6 +73,7 @@ export async function getDb(): Promise<Db> {
 export async function collections(): Promise<Collections> {
   const db = await getDb();
   return {
+    listings: db.collection("listings"),
     users: db.collection("users"),
     sessions: db.collection("sessions"),
     passwordTokens: db.collection("passwordTokens"),

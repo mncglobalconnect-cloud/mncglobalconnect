@@ -8,6 +8,7 @@ import worldAtlas from "world-atlas/countries-110m.json";
 import { ArrowRight, Building2, CalendarDays, Globe2, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { NetworkMapMotion } from "@/components/home/network-map-motion";
 
 const mapWidth = 1000;
 const mapHeight = 510;
@@ -95,22 +96,31 @@ function WorldMap() {
         strokeWidth="1.5"
         opacity=".72"
       >
-        {hubs.slice(1).map(({ label, coordinate }) => {
+        {hubs.slice(1).map(({ label, coordinate }, index) => {
           const [x, y] = project(coordinate);
           const middleX = (origin[0] + x) / 2;
           const middleY = Math.min(origin[1], y) - 35;
           return (
-            <path
-              key={label}
-              d={`M${origin[0]},${origin[1]} Q${middleX},${middleY} ${x},${y}`}
-            />
+            <g key={label}>
+              <path d={`M${origin[0]},${origin[1]} Q${middleX},${middleY} ${x},${y}`} />
+              <path
+                className="network-route-trail"
+                d={`M${origin[0]},${origin[1]} Q${middleX},${middleY} ${x},${y}`}
+                pathLength={1}
+                strokeDasharray=".075 .925"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                style={{ animationDelay: `${index * -0.85}s`, animationDuration: `${4 + index * 0.35}s` }}
+              />
+            </g>
           );
         })}
       </g>
-      {hubs.map(({ label, coordinate, primary }) => {
+      {hubs.map(({ label, coordinate, primary }, index) => {
         const [x, y] = project(coordinate);
         return (
           <g key={label}>
+            <title>{label}</title>
             <circle cx={x} cy={y} r={primary ? 21 : 14} fill="url(#hub-glow)" />
             <circle cx={x} cy={y} r={primary ? 5 : 3.5} fill={primary ? "#35be84" : "#148ce0"} />
             <circle
@@ -120,6 +130,16 @@ function WorldMap() {
               fill="none"
               stroke={primary ? "#35be84" : "#20b7d5"}
               strokeOpacity=".5"
+            />
+            <circle
+              className="network-hub-pulse"
+              cx={x}
+              cy={y}
+              r={primary ? 8 : 6}
+              fill="none"
+              stroke={primary ? "#35be84" : "#148ce0"}
+              strokeWidth="1.3"
+              style={{ animationDelay: `${index * -0.45}s` }}
             />
           </g>
         );
@@ -168,9 +188,9 @@ export function GlobalNetworkSection() {
         <div className="overflow-hidden rounded-[24px] border border-[#e5edf4] bg-[#f6fafe]">
           <div className="relative px-3 py-6 sm:px-8 sm:py-8">
             <div className="absolute inset-0 soft-map-grid opacity-75" />
-            <div className="relative mx-auto w-full max-w-[1040px]">
+            <NetworkMapMotion>
               <WorldMap />
-            </div>
+            </NetworkMapMotion>
             <div className="relative flex flex-wrap justify-center gap-2">
               {regions.map((region) => (
                 <span

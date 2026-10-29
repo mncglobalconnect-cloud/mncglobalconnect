@@ -89,6 +89,9 @@ closing call to action.
 - Submitted applications, their documents (MongoDB GridFS) and declarations are
   stored in MongoDB; see **Database & member accounts** below. Save draft keeps the
   form on this device only (`mnc-membership-draft-v1`) and leaves documents out.
+- In step 7, **View** opens an attached PDF, JPG or PNG in a new tab so applicants
+  can check it before submitting. Previews use local browser files and do not
+  upload them. Replacing or removing a file clears its preview link.
 - Live use requires approved membership terms and privacy/retention rules,
   secure backend persistence, verification, review workflows and payment
   integration.
@@ -132,6 +135,34 @@ npm run admin -- create-admin you@company.com "Your Name"   # prints a set-passw
 | Subscribers | Search and **Export CSV** |
 
 Admin APIs live under `/api/admin/*` and refuse non-admins with 403.
+
+### Publishing events and opportunities
+
+Open **Events** or **Opportunities** in the admin sidebar. Add a title, category,
+country, date, location (events) or industry (opportunities), and a complete
+HTTP(S) website / registration link. Optionally add a short description and an
+image URL or local `/images/` path; a default image is used when left blank.
+Remote images load directly in the visitor's browser.
+
+Check **Publish on the website** and save to make a listing public. Leave it
+unchecked for a draft. Use **Edit** to change a listing or uncheck publishing to
+remove it from public view. Listings persist in the MongoDB `listings` collection.
+
+The home page shows the four newest published opportunities and the four nearest
+upcoming events. The **View all** pages show all published opportunities and all
+upcoming published events. Event dates use UTC; past events stay in the admin
+panel but leave upcoming listings. The previous illustrative cards are not used
+as live listings. Empty lists and loading failures show explicit messages.
+
+Card image, title and Explore links open the supplied website in a new tab with
+`noopener noreferrer`, not an internal details page. Existing detail-route URLs
+redirect only for published records; missing or draft records return 404.
+
+Run `npm run test:listings` for field and URL validation. After `npm run build`,
+run `npm run test:listings:integration` for admin access, persistence,
+publish/edit/unpublish, public ordering and external-link checks. Integration
+tests start their own temporary MongoDB and local app server, never the configured
+live database, and stop both when finished.
 
 Accounts are created only when an application is approved (in the dashboard, or from the
 command line):

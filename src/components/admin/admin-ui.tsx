@@ -7,6 +7,8 @@ export const dateOnly = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }
 export const PAGE_SIZE = 20;
 
 const badgeTones: Record<string, string> = {
+  published: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  draft: "bg-slate-100 text-slate-600 ring-slate-200",
   submitted: "bg-amber-50 text-amber-700 ring-amber-200",
   approved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   rejected: "bg-rose-50 text-rose-700 ring-rose-200",

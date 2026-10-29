@@ -1,4 +1,4 @@
-import { RoutePlaceholder } from "@/components/layout/route-placeholder";
+import { redirectToListing } from "@/lib/server/listings";
 
 export default async function OpportunityDetailsPage({
   params,
@@ -6,10 +6,5 @@ export default async function OpportunityDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return (
-    <RoutePlaceholder
-      title={`Opportunity ${id}`}
-      description="Opportunity details and business introduction requests will be available here."
-    />
-  );
+  return redirectToListing("opportunities", id);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Inbox, LayoutDashboard, Mail, UsersRound } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, FileText, Inbox, LayoutDashboard, Mail, UsersRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,8 @@ const items: { href: string; label: string; icon: LucideIcon; countKey?: "applic
   { href: "/admin-dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/admin-dashboard/applications", label: "Applications", icon: FileText, countKey: "applications" },
   { href: "/admin-dashboard/members", label: "Members", icon: UsersRound },
+  { href: "/admin-dashboard/opportunities", label: "Opportunities", icon: BriefcaseBusiness },
+  { href: "/admin-dashboard/events", label: "Events", icon: CalendarDays },
   { href: "/admin-dashboard/enquiries", label: "Enquiries", icon: Inbox, countKey: "enquiries" },
   { href: "/admin-dashboard/subscribers", label: "Subscribers", icon: Mail },
 ];

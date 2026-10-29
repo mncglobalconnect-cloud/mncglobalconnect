@@ -1,5 +1,12 @@
 import type { Collection, ObjectId } from "mongodb";
 import type { MembershipApplication, MembershipSelection } from "@/types/membership";
+import type { ListingInput } from "@/types/listing";
+
+export interface ListingRecord extends ListingInput {
+  _id?: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export type ApplicationStatus = "submitted" | "approved" | "rejected";
 export type UserStatus = "invited" | "active" | "disabled";
@@ -84,6 +91,7 @@ export interface NewsletterSubscriberRecord {
 }
 
 export interface Collections {
+  listings: Collection<ListingRecord>;
   users: Collection<UserRecord>;
   sessions: Collection<SessionRecord>;
   passwordTokens: Collection<PasswordTokenRecord>;

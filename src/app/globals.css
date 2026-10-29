@@ -313,6 +313,44 @@
   background-size: auto, 40px 40px, 40px 40px;
 }
 
+.network-route-trail {
+  animation: network-route-travel 5s linear infinite;
+}
+
+.network-hub-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: network-hub-ripple 3.2s ease-out infinite;
+}
+
+.network-map .network-route-trail,
+.network-map .network-hub-pulse {
+  animation-play-state: paused;
+}
+
+.network-map[data-animated="true"] .network-route-trail,
+.network-map[data-animated="true"] .network-hub-pulse {
+  animation-play-state: running;
+}
+
+@keyframes network-route-travel {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -1; }
+}
+
+@keyframes network-hub-ripple {
+  0% { transform: scale(1); opacity: 0.65; }
+  85%, 100% { transform: scale(2.8); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .network-route-trail,
+  .network-hub-pulse {
+    display: none;
+    animation: none;
+  }
+}
+
 @keyframes journey-progress {
   from {
     background-size: 0 1px;
@@ -358,12 +396,6 @@
   background-size: 22px 22px;
   -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, #000 20%, transparent 80%);
   mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, #000 20%, transparent 80%);
-}
-
-/* Service card photo sits in its own column and fades into the white card at its left edge. */
-.service-card-image {
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgb(0 0 0 / 55%) 30%, #000 60%);
-  mask-image: linear-gradient(to right, transparent 0%, rgb(0 0 0 / 55%) 30%, #000 60%);
 }
 
 /* Shared form controls (src/components/ui/form-controls.tsx), layered so utilities like pl-11 still apply. */

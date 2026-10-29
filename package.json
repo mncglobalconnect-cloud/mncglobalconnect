@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test:listings": "node --experimental-strip-types --test tests/listings.test.mjs",
+    "test:listings:integration": "node --test tests/listings.integration.test.mjs",
     "test:membership": "node --experimental-strip-types --test tests/membership-verification.test.mjs tests/google-address.test.mjs tests/business-identity.test.mjs",
     "admin": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/admin.mjs",
     "db:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-check.mjs"

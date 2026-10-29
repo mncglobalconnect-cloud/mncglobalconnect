@@ -72,7 +72,7 @@ export default async function ApplicationDetailPage({ params }: PageProps<"/admi
         <div className="grid min-w-0 content-start gap-5">
           <Section title="Applicant">
             <Field label="Full name" value={personal.fullName} />
-            <Field label="Job title" value={personal.designation} />
+            <Field label="Designation" value={personal.designation} />
             <Field label="Business email" value={<a href={`mailto:${personal.email}`} className="text-[#0878c7] hover:underline">{personal.email}</a>} />
             <Field label="Mobile / WhatsApp" value={`${personal.dialCode} ${personal.mobile}`} />
             <Field label="Country of residence" value={personal.residence} />

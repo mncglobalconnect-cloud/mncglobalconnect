@@ -37,7 +37,7 @@ export function validateStep(data: MembershipApplication, step: number): StepErr
   if (step === 0) {
     const { personal } = data;
     if (personal.fullName.trim().length < 2) errors["personal.fullName"] = "Enter your full name.";
-    need("personal.designation", personal.designation, "Enter your job title.");
+    need("personal.designation", personal.designation, "Enter your designation.");
     if (!personal.email.trim()) errors["personal.email"] = "Enter your business email address.";
     else if (!EMAIL_PATTERN.test(personal.email.trim())) errors["personal.email"] = "Enter a valid email, like name@company.com.";
     if (!membershipCountries.includes(personal.residence)) errors["personal.residence"] = "Select your country.";

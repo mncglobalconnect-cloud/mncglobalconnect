@@ -24,6 +24,7 @@ import {
 import type { ApplicationReceipt, BillingRegion, MembershipApplication, MembershipPlanId } from "@/types/membership";
 import { normaliseUrl, requiredDocumentKinds, validateStep, type StepErrors } from "./application-validation";
 import { RegionSwitch } from "./region-switch";
+import { DocumentPreviewLink } from "./document-preview-link";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const stepIcons: LucideIcon[] = [UserRound, Building2, MapPin, ShieldCheck, Network, Sparkles, FileUp, ClipboardList];
@@ -159,7 +160,7 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
   const headingRef = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
   // The actual files for attached documents; `data.documents` holds only their metadata.
-  const files = useRef(new Map<string, File>());
+  const [files, setFiles] = useState(() => new Map<string, File>());
   const application: MembershipApplication = { ...data, membership: { region, plan } };
   const plans = membershipPlans[region];
   const chosenPlan = plans.find((item) => item.id === plan) ?? plans[1];
@@ -208,7 +209,7 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
   };
 
   const send = async () => {
-    const missing = application.documents.find((doc) => !files.current.has(doc.kind));
+    const missing = application.documents.find((doc) => !files.has(doc.kind));
     if (missing) {
       goTo(6);
       setErrors({ [`document.${missing.kind}`]: "Please attach this file again." });
@@ -216,7 +217,7 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
     }
     const form = new FormData();
     form.append("application", JSON.stringify(application));
-    for (const doc of application.documents) form.append(`document:${doc.kind}`, files.current.get(doc.kind)!);
+    for (const doc of application.documents) form.append(`document:${doc.kind}`, files.get(doc.kind)!);
     setSubmitting(true);
     setNotice("");
     try {
@@ -257,7 +258,7 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
       const saved = localStorage.getItem(DRAFT_KEY);
       if (!saved) { setNotice("No saved draft on this device yet."); return; }
       const draft = parseDraft(saved);
-      files.current.clear();
+      setFiles(new Map());
       setData({ ...draft.application, documents: [] });
       onRegionChange(draft.application.membership.region);
       onPlanChange(draft.application.membership.plan);
@@ -280,7 +281,7 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
       verification: createApplication({ region, plan }).verification,
       documents: [],
     }));
-    files.current.clear();
+    setFiles(new Map());
     clearErrors("address.");
   };
 
@@ -288,7 +289,7 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
     if (!file) return;
     const valid = /\.(pdf|jpe?g|png)$/i.test(file.name) && DOCUMENT_TYPES.includes(file.type) && file.size > 0 && file.size <= MAX_DOCUMENT_SIZE;
     if (!valid) { setErrors((previous) => ({ ...previous, [`document.${kind}`]: "Use a PDF, JPG or PNG up to 5 MB." })); return; }
-    files.current.set(kind, file);
+    setFiles((previous) => new Map(previous).set(kind, file));
     setData((previous) => ({
       ...previous,
       documents: [...previous.documents.filter((doc) => doc.kind !== kind), { kind, name: file.name, size: file.size, type: file.type }],
@@ -423,7 +424,7 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
                 <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                   <TextField id="personal.fullName" label="Full name" icon={UserRound} autoComplete="name" placeholder="Your full name"
                     value={data.personal.fullName} error={errors["personal.fullName"]} onChange={(e) => set("personal", "fullName", e.target.value)} />
-                  <TextField id="personal.designation" label="Job title" icon={Briefcase} autoComplete="organization-title" placeholder="e.g. Managing Director"
+                  <TextField id="personal.designation" label="Designation" icon={Briefcase} autoComplete="organization-title" placeholder="e.g. Managing Director"
                     value={data.personal.designation} error={errors["personal.designation"]} onChange={(e) => set("personal", "designation", e.target.value)} />
                   <div className="sm:col-span-2">
                     <TextField id="personal.email" label="Business email" type="email" icon={Mail} autoComplete="email" placeholder="name@company.com"
@@ -610,15 +611,16 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
                   <div className="grid gap-3 sm:grid-cols-2">
                     {profile.documents.map(({ kind, guidance }, index) => {
                       const doc = data.documents.find((item) => item.kind === kind);
+                      const file = files.get(kind);
                       const required = requiredDocs.includes(kind);
                       const error = errors[`document.${kind}`];
                       return (
                         <div key={kind} className={`rounded-2xl border p-3.5 transition ${error ? "border-[#e0566a] bg-[#fffafb]" : doc ? "border-[#35be84]/40 bg-[#f4fbf7]" : "border-slate-200"}`}>
-                          <div className="flex items-start gap-3">
+                          <div className="flex flex-wrap items-start gap-3">
                             <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${doc ? "bg-[#35be84]/15 text-[#218864]" : "bg-[#148ce0]/[0.08] text-[#148ce0]"}`}>
                               {doc ? <FileCheck2 aria-hidden="true" className="size-[18px]" /> : <FileUp aria-hidden="true" className="size-[18px]" />}
                             </span>
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-32">
                               <p className="text-[13.5px] font-bold leading-snug text-[#082b59]">
                                 {kind}
                                 <span className={`ml-2 rounded-full px-1.5 py-0.5 align-middle text-[9.5px] font-bold uppercase tracking-wider ${required ? "bg-[#148ce0]/10 text-[#0878c7]" : "bg-slate-100 text-slate-500"}`}>
@@ -630,10 +632,14 @@ export function ApplicationWizard({ region, plan, onRegionChange, onPlanChange }
                                 : <p className="mt-0.5 text-[12px] text-slate-500">{guidance}</p>}
                               {error && <p role="alert" className="mt-1 text-[12px] font-medium text-[#d6334a]">{error}</p>}
                             </div>
-                            <div className="flex shrink-0 items-center gap-1">
+                            <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1">
+                              {doc && file && <DocumentPreviewLink file={file} />}
                               {doc && (
                                 <button type="button" aria-label={`Remove ${kind}`}
-                                  onClick={() => { files.current.delete(kind); setData((p) => ({ ...p, documents: p.documents.filter((item) => item.kind !== kind) })); }}
+                                  onClick={() => {
+                                    setFiles((previous) => { const next = new Map(previous); next.delete(kind); return next; });
+                                    setData((p) => ({ ...p, documents: p.documents.filter((item) => item.kind !== kind) }));
+                                  }}
                                   className="flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-[#d6334a]">
                                   <Trash2 aria-hidden="true" className="size-4" />
                                 </button>
